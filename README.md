@@ -1,2 +1,3 @@
-# octopus-backend
-the node.js backend server for octopus
+### Prep
+
+API server for event.abcer.world
