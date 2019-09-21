@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 var passport = require('passport');
 var GoogleTokenStrategy = require('passport-google-token').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
-var keys = require('../config/keys');
+const googleAuth = require("../config").config.googleAuth;
 const User = require("../models/User");
 
 const validateLoginInput = require("../validation/login");
@@ -41,8 +41,8 @@ module.exports = function() {
     }
   ));
   passport.use(new GoogleTokenStrategy({
-      clientID: keys.googleAuth.clientID,
-      clientSecret: keys.googleAuth.clientSecret
+      clientID: googleAuth.clientID,
+      clientSecret: googleAuth.clientSecret
     }, function (accessToken, refreshToken, profile, done) {
       User.upsertGoogleUser(accessToken, refreshToken, profile, function(err, user) {
         if (err) {

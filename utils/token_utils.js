@@ -1,11 +1,11 @@
-var keys = require('../config/keys');
+const config = require("../config").config;
 var jwt = require('jsonwebtoken');
 
 var createToken = function(user) {
   return jwt.sign({
     id: user.id,
     emai: user.email
-  }, keys.secretOrKey,
+  }, config.secretOrKey,
   {
     expiresIn: 60 * 120
   });

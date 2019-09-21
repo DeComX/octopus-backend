@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const keys = require("../config/keys");
+const keys = require("../config").config;
 
 module.exports = function(req, res, next) {
   if (req.path.startsWith('/static') ||
