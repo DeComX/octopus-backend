@@ -33,7 +33,6 @@ router.route('/local')
 
 router.route('/google')
   .post(passport.authenticate('google-token', {session: false}), function(req, res, next) {
-    console.log(req.user);
     if (!req.user) {
       return res.send(401, 'User Not Authenticated');
     }
