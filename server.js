@@ -2,7 +2,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const passport = require("passport");
 const path = require('path');
-var cors = require('cors');
 
 const users = require("./routes/api/users");
 const members = require("./routes/api/members");
@@ -12,13 +11,26 @@ const campaigns = require("./routes/api/campaigns");
 const organizations = require("./routes/api/organizations");
 const urls = require("./routes/api/urls");
 const publicurl = require("./routes/url");
+const config = require("./config");
 
 const app = express();
+
+const cors = require('cors');
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (config.cors_whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  }
+}
+app.use(cors(corsOptions));
+
 // Bodyparser middleware
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
-app.use(cors());
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -32,13 +44,12 @@ passport.deserializeUser(function(user, done) {
 });
 
 // DB Config
-const db = require("./config").mongoURI;
 const options = {
   useNewUrlParser: true,
   useFindAndModify: false
 };
 mongoose
-  .connect(db, options)
+  .connect(config.mongoURI, options)
   .then(() => console.log("MongoDB successfully connected"))
   .catch(err => console.log(err));
 

@@ -1,0 +1,11 @@
+FROM node:12.10.0-alpine
+
+EXPOSE 5000
+
+USER root
+
+WORKDIR /data
+
+RUN npm install -g nodemon
+
+ENTRYPOINT ["nodemon", "server.js"]
