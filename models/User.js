@@ -38,6 +38,9 @@ UserSchema.statics.upsertGoogleUser = function(accessToken, refreshToken, profil
     'email': profile.emails[0].value
   }, function(err, user) {
     if (!user) {
+      if (profile._json.hd !== 'abcer.world') {
+        return cb("Invalid domain name, only abcer.world is allowed", null);
+      }
       var newUser = new that({
         name: profile.displayName,
         email: profile.emails[0].value,

@@ -46,9 +46,9 @@ module.exports = function() {
     }, function (accessToken, refreshToken, profile, done) {
       User.upsertGoogleUser(accessToken, refreshToken, profile, function(err, user) {
         if (err) {
-          console.log(err);
+          done(err, false);
         } else {
-          return done(null, {
+          done(null, {
             id: user._id,
             email: user.email,
             name: user.name

@@ -16,7 +16,6 @@ const getShortUrl = async (tried = 0) => {
     return null;
   };
   const value = uuid().slice(0, 6);
-  console.log("tried: " + value);
   const exist = await doesExist(value);
   if (exist) {
     return getShortUrl(tried + 1);
@@ -45,7 +44,6 @@ router.get("/", (req, res) => {
 const wrap = require("../../middleware/wrap");
 router.post("/", wrap(async (req, res) => {
   const shortUrl = await getShortUrl();
-  console.log("generated: " + shortUrl);
   if (shortUrl) {
     new Url({
       short: shortUrl,
