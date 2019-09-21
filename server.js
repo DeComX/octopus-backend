@@ -32,7 +32,7 @@ passport.deserializeUser(function(user, done) {
 });
 
 // DB Config
-const db = require("./config").config.mongoURI;
+const db = require("./config").mongoURI;
 const options = {
   useNewUrlParser: true,
   useFindAndModify: false

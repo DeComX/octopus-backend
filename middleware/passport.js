@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 var passport = require('passport');
 var GoogleTokenStrategy = require('passport-google-token').Strategy;
 var LocalStrategy = require('passport-local').Strategy;
-const googleAuth = require("../config").config.googleAuth;
+const googleAuth = require("../config").googleAuth;
 const User = require("../models/User");
 
 const validateLoginInput = require("../validation/login");

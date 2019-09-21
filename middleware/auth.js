@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const keys = require("../config").config;
+const config = require("../config");
 
 module.exports = function(req, res, next) {
   if (req.path.startsWith('/static') ||
@@ -15,7 +15,7 @@ module.exports = function(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token.substr(7), keys.secretOrKey);
+    const decoded = jwt.verify(token.substr(7), config.secretOrKey);
     req.user = decoded;
     next();
   } catch (ex) {

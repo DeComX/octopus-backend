@@ -1,0 +1,9 @@
+{
+  "mongoURI": "your-mongo-url",
+  "secretOrKey": "your-secret",
+  "googleAuth" : {
+    "clientID": "your-client-id",
+    "clientSecret": "your-client-secret",
+    "callbackURL": "https://localhost:5000/auth/google/callback"
+  }
+}
