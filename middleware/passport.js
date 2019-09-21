@@ -23,6 +23,10 @@ module.exports = function() {
 
       User.findOne({ email }).then(user => {
         if (user) {
+          if (!user.password) {
+              done({password: "Password not set. Please contact admin to assign you one or use google login"}, false);
+          }
+
           bcrypt.compare(password, user.password).then(isMatch => {
             if (isMatch) {
               done(null, {
