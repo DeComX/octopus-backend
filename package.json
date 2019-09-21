@@ -31,7 +31,6 @@
     "validator": "^10.9.0"
   },
   "dependencies": {
-    "@wojtekmaj/react-datetimerange-picker": "^2.3.0",
     "cors": "^2.8.5",
     "google-auth-library": "^5.2.2",
     "mongoose-paginate-v2": "^1.3.0",
