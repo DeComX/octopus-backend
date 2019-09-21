@@ -47,8 +47,7 @@ router.post("/", wrap(async (req, res) => {
   if (shortUrl) {
     new Url({
       short: shortUrl,
-      long: req.body.longurl,
-      clicks: 0
+      long: req.body.longurl
     }).save()
       .then(data => res.json(data))
       .catch(error => res.status(400).json(

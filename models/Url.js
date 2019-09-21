@@ -12,13 +12,12 @@ const UrlSchema = new Schema({
     type: String,
     required: true
   },
-  clicks: {
-    type: Number,
-    required: true
-  },
   created_at: {
     type: Date,
     default: Date.now
+  },
+  clicks: {
+    type: [Date]
   }
 });
 
