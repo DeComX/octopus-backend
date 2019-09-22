@@ -7,14 +7,21 @@ const PropertyType = {
   MEMBER: "member",
   ORGANIZATION: "organization",
   SESSION: "session",
-}
+};
 
 const DefaultRoles = {
   OWNER: "owner",
   AMDIN: "admin",
   READ: "read",
   READWRITE: "readwrite",
-}
+};
+
+const DefaultAdminRoles = new Map([
+  [DefaultRoles.OWNER, null],
+  [DefaultRoles.AMDIN, DefaultRoles.OWNER],
+  [DefaultRoles.READ, DefaultRoles.AMDIN],
+  [DefaultRoles.READWRITE, DefaultRoles.AMDIN],
+]);
 
 const listPropertyTypes = () => {
   return Object.values(PropertyType);
@@ -32,15 +39,44 @@ const isPropertyBased = (propertyType) => {
   }
 }
 
-const listRoles = (type) => {
-  switch(type) {
+const listRoles = (propertyType) => {
+  switch (propertyType) {
     default:
-      return DefaultRoles;
+      return Object.values(DefaultRoles);
 	}
 }
 
+// Find the role, which can manage targetRole.
+// Return undefined if targetRole and propertyType does not match.
+const getAdminRole = (propertyType, targetRole) => {
+  let adminRoleMap;
+  switch (propertyType) {
+    default:
+    adminRoleMap = DefaultAdminRoles;
+  }
+  return adminRoleMap.get(targetRole);
+}
+
+// Find the role above and including targetRole.
+// Return undefined if targetRole and propertyType does not match.
+const getAboveRoles = (propertyType, targetRole) => {
+  const aboveRoles = [];
+  let adminRoleMap;
+  switch (propertyType) {
+    default:
+    adminRoleMap = DefaultAdminRoles;
+  }
+  let role = targetRole;
+  while (adminRoleMap.has(role)) {
+    aboveRoles.push(role);
+    role = adminRoleMap.get(role);
+  }
+}
+
 module.exports = {
-	listPropertyTypes: listPropertyTypes,
-	isPropertyBased: isPropertyBased,
-	listRoles: listRoles,
+  listPropertyTypes: listPropertyTypes,
+  isPropertyBased: isPropertyBased,
+  listRoles: listRoles,
+  getAdminRole: getAdminRole,
+  getAboveRoles: getAboveRoles
 }
