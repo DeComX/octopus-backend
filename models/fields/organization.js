@@ -60,17 +60,33 @@ const OrganizationPublicFields = {
   logo: {
     type: ImageSchema,
   },
+  type: {
+    type: String,
+    enum: ['venue', 'project', 'community', 'capital', 'other'],
+    requried: true
+  },
 }
+
+ContactSchma = new Schema({
+  type: {
+    type: String,
+    enum: ['email', 'wechat', 'tel']
+  },
+  value: {
+    type: String
+  },
+  name: {
+    type: String
+  },
+  title: {
+    type: String
+  }
+},{ _id : false });
 
 const OrganizationFields = {
   ...OrganizationPublicFields,
-  team_info: {
-    type: String
-  },
-  type: {
-    type: String,
-    enum: ['venue', 'project', 'community', 'other'],
-    requried: true
+  members: {
+    type: [ContactSchma]
   },
   focused_area: {
     type: [String]

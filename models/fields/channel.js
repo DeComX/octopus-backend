@@ -6,6 +6,10 @@ ChannelSchema = new Schema({
     type: String,
     required: true,
   },
+  type: {
+    type: String,
+    enum: ['wechat', 'meetup', 'eventbrite', 'forum', 'email']
+  },
   link: {
     type: String,
   },
