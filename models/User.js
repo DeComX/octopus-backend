@@ -1,27 +1,12 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const mongoosePaginate = require('mongoose-paginate-v2');
 
-// Create Schema
+const Schema = mongoose.Schema;
+const fieldsHelper = require('./fields/helper');
+
+const collectionName = "users";
 const UserSchema = new Schema({
-  name: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    unqiue: true,
-    required: true
-  },
-  password: {
-    type: String,
-  },
-  googleProvider: {
-    type: {
-      id: String,
-      token: String
-    },
-    select: false
-  },
+  ...fieldsHelper.getFields(collectionName),
   created_at: {
     type: Date,
     default: Date.now
@@ -29,8 +14,10 @@ const UserSchema = new Schema({
   updated_at: {
     type: Date,
     required: true,
-  }
+  },
 });
+
+UserSchema.plugin(mongoosePaginate);
 
 UserSchema.statics.upsertGoogleUser = function(accessToken, refreshToken, profile, cb) {
   var that = this;
@@ -48,7 +35,7 @@ UserSchema.statics.upsertGoogleUser = function(accessToken, refreshToken, profil
           id: profile.id,
           token: accessToken
         },
-        updated_at: new Date(),
+        updated_at: new Date()
       });
       newUser.save(function(error, savedUser) {
         return cb(error, savedUser);
@@ -62,10 +49,10 @@ UserSchema.statics.upsertGoogleUser = function(accessToken, refreshToken, profil
       user.markModified("googleProvider");
       user.markModified("updated_at");
       user.save(function(error, savedUser) {
-        return cb(error, user);
+        return cb(error, savedUser);
       });
     }
   });
 };
 
-module.exports = User = mongoose.model("users", UserSchema);
+module.exports = User = mongoose.model(collectionName, UserSchema);

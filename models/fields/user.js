@@ -4,7 +4,7 @@ const isEmpty = require("is-empty");
 
 const ImageSchema = require('./image');
 
-const MemberFields = {
+const UserFields = {
   name: {
     type: String,
     required: true
@@ -46,10 +46,20 @@ const MemberFields = {
   },
   linkedin: {
     type: String
+  },
+  password: {
+    type: String,
+  },
+  googleProvider: {
+    type: {
+      id: String,
+      token: String
+    },
+    select: false
   }
 };
 
-const MemberValidator = (data) => {
+const UserValidator = (data) => {
   let errors = {};
   ['name', 'email', 'introduction'].map(
     field => {
@@ -72,6 +82,6 @@ const MemberValidator = (data) => {
 };
 
 module.exports = {
-  fields: MemberFields,
-  validator: MemberValidator
+  fields: UserFields,
+  validator: UserValidator
 }

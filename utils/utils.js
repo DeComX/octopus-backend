@@ -1,4 +1,4 @@
-const Member = require("../models/Member");
+const User = require("../models/User");
 const Session = require("../models/Session");
 const Event = require("../models/Event");
 
@@ -13,9 +13,9 @@ const fillSession = (session) => {
 
   return new Promise(
     (resolve, reject) => {
-      Member.find({_id: session.speakers})
-        .then(members => {
-          sessionObj.speakers = members;
+      User.find({_id: session.speakers})
+        .then(users => {
+          sessionObj.speakers = user;
           resolve(sessionObj);
         })
         .catch(err => {

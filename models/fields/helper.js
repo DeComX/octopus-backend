@@ -1,9 +1,8 @@
 const event = require('./event');
 const session = require('./session');
-const member = require('./member');
+const user = require('./user');
 const organization = require('./organization');
 const campaign = require('./campaign');
-
 
 const getFields = (collectionName) => {
   switch(collectionName) {
@@ -11,8 +10,8 @@ const getFields = (collectionName) => {
       return event.fields;
     case 'sessions':
       return session.fields;
-    case 'members':
-      return member.fields;
+    case 'users':
+      return user.fields;
     case 'organizations':
       return organization.fields;
     case 'campaigns':
@@ -28,8 +27,8 @@ const getValidator = (collectionName) => {
       return event.validator;
     case 'sessions':
       return session.validator;
-    case 'members':
-      return member.validator;
+    case 'users':
+      return user.validator;
     case 'organizations':
       return organization.validator;
     case 'campaigns':
