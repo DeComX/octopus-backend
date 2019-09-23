@@ -40,7 +40,6 @@ const UserFields = {
   },
   introduction: {
     type: String,
-    required: true,
   },
   imgs: {
     type: [ImageSchema]
