@@ -4,21 +4,28 @@ const isEmpty = require("is-empty");
 
 const ImageSchema = require('./image');
 
-const UserFields = {
+const UserPublicFields = {
   name: {
     type: String,
     required: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique : true
   },
   title: {
     type: String,
   },
   organization: {
     type: String,
+  },
+  avatar: {
+    type: ImageSchema
+  },
+}
+
+const UserFields = {
+  ...UserPublicFields,
+  email: {
+    type: String,
+    required: true,
+    unique : true
   },
   roles: {
     type: [{ type: String, enum: [ 'member', 'presenter', 'advisor', 'honor_member' ] }],
@@ -34,9 +41,6 @@ const UserFields = {
   introduction: {
     type: String,
     required: true,
-  },
-  avatar: {
-    type: ImageSchema
   },
   imgs: {
     type: [ImageSchema]
@@ -82,6 +86,7 @@ const UserValidator = (data) => {
 };
 
 module.exports = {
+  publicFields: UserPublicFields,
   fields: UserFields,
   validator: UserValidator
 }

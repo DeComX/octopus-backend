@@ -2,6 +2,8 @@ const User = require("../models/User");
 const Session = require("../models/Session");
 const Event = require("../models/Event");
 
+const userPublicFields = require("../models/fields/user").publicFields;
+
 // return a promise
 const fillSession = (session) => {
   let sessionObj = session;
@@ -13,15 +15,17 @@ const fillSession = (session) => {
 
   return new Promise(
     (resolve, reject) => {
-      User.find({_id: session.speakers})
-        .then(users => {
-          sessionObj.speakers = user;
-          resolve(sessionObj);
-        })
-        .catch(err => {
-          sessionObj.speakers = [];
-          resolve(sessionObj);
-        });
+      User.find(
+        {_id: session.speakers},
+        Object.keys(userPublicFields || {}).join(' ')
+      ).then(users => {
+        sessionObj.speakers = user;
+        resolve(sessionObj);
+      })
+      .catch(err => {
+        sessionObj.speakers = [];
+        resolve(sessionObj);
+      });
     }
   );
 }

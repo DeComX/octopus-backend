@@ -43,7 +43,7 @@ const AddressValidator = (address) => {
   };
 }
 
-const OrganizationFields = {
+const OrganizationPublicFields = {
   name: {
     type: String,
     required: true
@@ -54,6 +54,16 @@ const OrganizationFields = {
   website: {
     type: String,
   },
+  address: {
+    type: AddressSchema,
+  },
+  logo: {
+    type: ImageSchema,
+  },
+}
+
+const OrganizationFields = {
+  ...OrganizationPublicFields,
   team_info: {
     type: String
   },
@@ -64,13 +74,6 @@ const OrganizationFields = {
   },
   focused_area: {
     type: [String]
-  },
-  address: {
-    type: AddressSchema,
-    required: true
-  },
-  logo: {
-    type: ImageSchema,
   },
   imgs: {
     type: [ImageSchema]
@@ -88,7 +91,6 @@ const OrganizationValidator = (data) => {
     }
   );
   let isValid = isEmpty(errors);
-  console.log(data);
   if (data.type === 'venue') {
     errors.address = AddressValidator(data.address || {});
     isValid = isValid && errors.address.isValid;
@@ -100,6 +102,7 @@ const OrganizationValidator = (data) => {
 };
 
 module.exports = {
+  publicFields: OrganizationPublicFields,
   fields: OrganizationFields,
   validator: OrganizationValidator
 }
