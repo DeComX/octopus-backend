@@ -85,7 +85,6 @@ router.post('/auth/google', function(req, res, next) {
     if (err) {
       return res.status(400).json(err);
     }
-
     req.logIn(user, function(err) {
       if (err) {
         return res.status(400).json(JSON.stringify(err));

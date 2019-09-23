@@ -64,7 +64,7 @@ const UserFields = {
 
 const UserValidator = (data) => {
   let errors = {};
-  ['name', 'email', 'introduction'].map(
+  ['name', 'email'].map(
     field => {
       if (isEmpty(data[field])) {
         errors[field] = field + " field is required";
