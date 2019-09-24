@@ -22,7 +22,7 @@ const EventFields = {
     required: true,
   },
   venue: {
-    type: new Schema(organization.fields),
+    type: new Schema(organization.publicFields),
     required: true,
   },
   description: {
@@ -42,7 +42,7 @@ const EventFields = {
     type: String,
   },
   partners: {
-    type: [new Schema(organization.fields)],
+    type: [new Schema(organization.publicFields)],
   },
   note: {
     type: String,

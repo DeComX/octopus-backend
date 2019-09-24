@@ -4,21 +4,28 @@ const isEmpty = require("is-empty");
 
 const ImageSchema = require('./image');
 
-const MemberFields = {
+const UserPublicFields = {
   name: {
     type: String,
     required: true
-  },
-  email: {
-    type: String,
-    required: true,
-    unique : true
   },
   title: {
     type: String,
   },
   organization: {
     type: String,
+  },
+  avatar: {
+    type: ImageSchema
+  },
+}
+
+const UserFields = {
+  ...UserPublicFields,
+  email: {
+    type: String,
+    required: true,
+    unique : true
   },
   roles: {
     type: [{ type: String, enum: [ 'member', 'presenter', 'advisor', 'honor_member' ] }],
@@ -33,10 +40,6 @@ const MemberFields = {
   },
   introduction: {
     type: String,
-    required: true,
-  },
-  avatar: {
-    type: ImageSchema
   },
   imgs: {
     type: [ImageSchema]
@@ -46,12 +49,22 @@ const MemberFields = {
   },
   linkedin: {
     type: String
+  },
+  password: {
+    type: String,
+  },
+  googleProvider: {
+    type: {
+      id: String,
+      token: String
+    },
+    select: false
   }
 };
 
-const MemberValidator = (data) => {
+const UserValidator = (data) => {
   let errors = {};
-  ['name', 'email', 'introduction'].map(
+  ['name', 'email'].map(
     field => {
       if (isEmpty(data[field])) {
         errors[field] = field + " field is required";
@@ -72,6 +85,7 @@ const MemberValidator = (data) => {
 };
 
 module.exports = {
-  fields: MemberFields,
-  validator: MemberValidator
+  publicFields: UserPublicFields,
+  fields: UserFields,
+  validator: UserValidator
 }

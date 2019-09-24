@@ -32,7 +32,8 @@ module.exports = function() {
               done(null, {
                 id: user._id,
                 email: user.email,
-                name: user.name
+                name: user.name,
+                avatar: user.avatar
               });
             } else {
               done({password: "Password not match"}, false);
@@ -55,7 +56,8 @@ module.exports = function() {
           done(null, {
             id: user._id,
             email: user.email,
-            name: user.name
+            name: user.name,
+            avatar: user.avatar
           });
         }
       });

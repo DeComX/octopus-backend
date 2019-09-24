@@ -4,7 +4,9 @@ var jwt = require('jsonwebtoken');
 var createToken = function(user) {
   return jwt.sign({
     id: user.id,
-    emai: user.email
+    emai: user.email,
+    name: user.name,
+    avatar: {name: user.avatar.name}
   }, config.secretOrKey,
   {
     expiresIn: 60 * 120
@@ -17,6 +19,6 @@ module.exports = {
     return next();
   },
   sendToken: function(req, res) {
-    return res.status(200).send({user: req.user, token: req.token});
+    return res.status(200).send({token: req.token});
   }
 };

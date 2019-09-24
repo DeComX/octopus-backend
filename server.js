@@ -4,7 +4,6 @@ const passport = require("passport");
 const path = require('path');
 
 const users = require("./routes/api/users");
-const members = require("./routes/api/members");
 const sessions = require("./routes/api/sessions");
 const events = require("./routes/api/events");
 const campaigns = require("./routes/api/campaigns");
@@ -56,9 +55,8 @@ mongoose
 // Routes
 app.all('*', require("./middleware/auth"));
 app.use("/api/v1/publicurl", publicurl);
-app.use("/api/v1/auth", users);
 app.use("/api/v1/urls", urls);
-app.use("/api/v1/members", members);
+app.use("/api/v1/users", users);
 app.use("/api/v1/sessions", sessions);
 app.use("/api/v1/events", events);
 app.use("/api/v1/organizations", organizations);
