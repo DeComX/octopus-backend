@@ -1,3 +1,12 @@
+/*
+ * Group for ACL.
+ * Each group contains a list of owners and a list of members. Nested group
+ * is not supported.
+ * Group name is unique.
+ * Group owner can add/remove memeber/owner.
+ * Only memebers in GROUP_GROUP_CREATORS can create new groups.
+ * PROTECTED_GROUPS contains whitelisted group names, which cannot be used. 
+ */
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
