@@ -1,92 +1,66 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const PropertyType = require('./property_type');
+const TypeAndRole = require('./acl_config');
 const Group = require('./group');
-
-const AccessSetSchema = new Schema({
-  userIds: [String],
-  groupNames: [String]
-});
 
 const AccessSchema = new Schema({
   propertyId: String,
   propertyType: String,
-  accessSet: AccessSetSchema,
+  groups: [String],
   role: String
 });
 
 const AccessModel = mongoose.model('access_control', AccessSchema);
 
-const isIncluded = (userId, accessSet) => {
-  for (id of accessSet.userIds) {
-    if (userId === id) {
-      return true;
-    }
-  }
-  for (groupName of accessSet.groupNames) {
-    if (Group.isInGroup(groupName, userId)) {
-      return true;
-    }
-    return false;
-  }
+/*
+ * Name of the default group for adding individuals is
+ * `${propertyType}_${propertyId}_${role}_group`
+ */
+const getDefaultGroupName = (propertyId, propertyType, role) => {
+	return `${propertyType}_${propertyId}_${role}_group`;
 }
 
-const isAbleToAccess = (userId, targetRole, accessRows) => {
-  if (!accessRows || !accessRows.length) {
-    return false;
+
+const findPropertyCondition = (propertyId, propertyType) => {
+  if (TypeAndRole.isPropertyBased(propertyType)) {
+    return { 'propertyType': propertyType };
   }
-  const type = accessRows[0].propertyType;
-  const aboveRoles = PropertyType.getAboveRoles(type, targetRole);
-  const permittedAccessRows = accessRows.filter(row => {
-    let matched = false;
-    for (role of aboveRoles) {
-      if (role === row.role) {
-        matched = true;
-        break;
-      }
-    }
-    return matched
-  });
-  for (row of permittedAccessRows) {
-    if (isIncluded(userId, row.accessSet)) {
-      return true;
-    }
-  }
-  return false;
+  return { 'propertyId': propertyId };
 }
 
-const findPropertyPromise = (propertyId, propertyType) => {
-  if (PropertyType.isPropertyBased(propertyType)) {
-    // There should be only one matched row exists.
-    return AccessModel.find({ propertyType: propertyType }).exec();
-  }
-  // There should be only one matched row exists.
-  return AccessModel.find({ propertyId: propertyId }).exec();
-}
-
-// Return Promise({ err: error, isAccessible: boolean, accessRow: AccessSetSchema })
+// Return Promise({ err: error, isAccessible: boolean })
 // accessRow is the AccessSet with given targetRole.
-const checkAccessHelper = (userId, propertyId, propertyType, targetRole) => {
-  findPropertyPromise(propertyId, propertyType)
+const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) => {
+  const aboveRolesList = TypeAndRole.getAboveRoles(propertyType, targetRole);
+  const aboveRolesMap = aboveRoleList.reduce((map, role) => {
+    map.set(role, true);
+    return map;
+  }, new Map());
+  AccessModel.find( findPropertyCondition(propertyId, propertyType) ).exec()
   .then(accessRows => {
     if (!accessRows || !accessRows.length) {
       return Promise.resolve({
         err: new Error("Cannot find the property")
   	  });
     }
-    const targetAccessRow = accessRows.find(row => row.role === targetRole);
-    if (!targetAccessRow) {
-      return Promise.resolve({
-        err: new Error(`Role ${targetRole} is invalid.`)
-      });
+    const accessibleRows = accessRows.filter(row => aboveRolesMap.has(row));
+    if (!accessibleRows || !accessibleRows.length) {
+      return Promise.resolve({ isAccessible: false });
     }
-    return Promise.resolve({
-      isAccessible: isAbleToAccess(userId, targetRole, accessRows)
-    });
+    const accessibleGroups = new Map();
+    for (row of accessibleRows) {
+      for (group of row.groups) {
+        accessibleGroups.set(group, true);
+      }
+    }
+    return Group.isInGroup(userId, Array.from(accessibleGroups.keys()), false);
   })
   .catch(err => {
-    return Promise.resolve({err: err});
-  });
+    return Promise.resolve({ err: err });
+  })
+  .then(isAccessible => {
+    return Promise.resolve({ isAccessible: isAccessible });
+  })
 }
 
 // callback = (err: boolean) => {}
@@ -97,99 +71,66 @@ const checkAccess = (userId, propertyId, propertyType, targetRole, callback) => 
   })
 }
 
-
-
-const addAccessPromise = (propertyId, propertyType, targetRole, updatedAccessBundle) => {
-  if (PropertyType.isPropertyBased(propertyType)) {
-    // There should be only one matched row exists.
-    return AccessModel.findOneAndUpdate({
-      propertyType: propertyType,
-      role: targetRole
-    }, updatedAccessBundle).exec();
-  }
-  // There should be only one matched row exists.
-  return AccessModel.findOneAndUpdate({
-    propertyId: propertyId,
-    role: targetRole
-  }, updatedAccessBundle).exec();
-}
-
-const findRowWithRolePromise = (propertyId, propertyType, role) => {
-  if (PropertyType.isPropertyBased(propertyType)) {
-    // There should be only one matched row exists.
-    return AccessModel.findOne({ propertyType: propertyType, role: role }).exec();
-  }
-  // There should be only one matched row exists.
-  return AccessModel.findOne({ propertyId: propertyId, role: role }).exec();
-}
-
 // op: 'add' or 'remove'
 // targetRole is the role of candidate instead of requester.
-const mutateAccessHelper = (requesterId, candidateIdOrName, isGroup, op, propertyId, propertyType, targetRole, callback) => {
-  const operation = (accessSet, IdOrName, isGroup, op) => {
-    switch (op) {
-      case 'add':
-        if (!isGroup) {
-          accessSet.userIds.push(IdOrName);
-        } else {
-          accessSet.groupNames.push(IdOrName);
-        }
-        break;
-      case 'remove':
-        if (!isGroup) {
-          accessSet.userIds = accessSet.userIds.filter(id => id !== IdOrName);
-        } else {
-          accessSet.groupNames = accessSet.groupNames.filter(name => name != IdOrName);
-        }
-        break;
-  	}
-  };
-  checkAccessHelper(userId, propertyId, propertyType, PropertyType.getAdminRole(targetRole))
+// Return Promise({ err: error })
+const mutateAccessOfOneUserHelper = (requesterId, candidateId, op, propertyId, propertyType, targetRole) => {
+  checkAccessHelper(requesterId, propertyId, propertyType, TypeAndRole.getAboveRole(targetRole))
   .then(result => {
     if (result.err) {
-    	return callback(err, null); 
+    	return Promise.resolve({ err: err }); 
     }
     if (!result.isAccessible) {
-      return callback(new Error('PERMISSION_DENIED'), null);
+      return Promise.resolve({ err: new Error('PERMISSION_DENIED') });
     }
-    return findRowWithRolePromise(propertyId, propertyType, targetRole);
-  })
-  .catch(err => { throw err })
-  .then(result => {
-    operation(result.accessSet, candidateIdOrName, isGroup, op);
-    return addAccessPromise(propertyId, propertyType, targetRole, result.accessSet);
-  })
-  .then(result => {
-    return callback(null, null);
-  })
-  .catch(err => {
-    return callback(err, null);
+    const groupName = getDefaultGroupName(propertyId, propertyType, targetRole);
+    switch (op) {
+      case 'add':
+        Group.addToGroup(requesterId, groupName, candidateId, (err, value) => {
+          if (!err) {
+            return Promise.resolve({ err: err });
+          }
+          return Promise.resolve({});
+        });
+        break;
+      case 'remove':
+        Group.removeFromGroup(requesterId, groupName, candidateId, (err, value) => {
+          if (!err) {
+            return Promise.resolve({ err: err });
+          }
+          return Promise.resolve({});
+        });
+        break;
+      default:
+        return Promise.resolve({ err: new Error(`Invalid operation ${op}.`) });
+    }
   });
 }
 
-// requesterId: userId of requester
-// candidateIdOrName: userId or group name to grant access
-// isGroup: whether the given "candidateIdOrName" is group name.
-const addAccess = (requesterId, candidateIdOrName, isGroup, propertyId, propertyType, role, callback) => {
-  mutateAccessHelper(requesterId, candidateIdOrName, isGroup, 'add', propertyId, propertyType, role, callback);
+const addAccessOfOneUser = (requesterId, candidateId, propertyId, propertyType, role, callback) => {
+  mutateAccessHelper(requesterId, candidateId, 'add', propertyId, propertyType, role).
+  then(err => {
+    if (err) {
+      return callback(err, null);
+    }
+    return callback(null, null);
+  })
 }
 
-const removeAccess =  (requesterId, candidateIdOrName, isGroup, propertyId, propertyType, role, callback) => {
-  mutateAccessHelper(requesterId, candidateIdOrName, isGroup, 'remove', propertyId, propertyType, role, callback);
+const removeAccessOfOneUser = (requesterId, candidateId, propertyId, propertyType, role, callback) => {
+  mutateAccessHelper(requesterId, candidateId, 'add', propertyId, propertyType, role).
+  then(err => {
+    if (err) {
+      return callback(err, null);
+    }
+    return callback(null, null);
+  })
 }
-
-const listAccessByProperty = (requesterId, propertyId, propertyType) => {}
-
-// Always add GROUP_SYSTEM_ADMIN as owner.
-const createAclForProperty = (requesterId, propertyId, propertyType) => {}
-
-const removeAclOfProperty = (requesterId, propertyId, propertyType) => {}
 
 module.exports = {
 	checkAccess: checkAccess,
-	addAccess: addAccess,
-	removeAccess: removeAccess,
-	listAccessByProperty: listAccessByProperty,
-	createAclForProperty: createAclForProperty,
-	removeAclOfProperty: removeAclOfProperty
+	addAccessOfOneUser: addAccessOfOneUser,
+	removeAccessOfOneUser: removeAccessOfOneUser,
+	addAccessOfOneGroup: addAccessOfOneGroup,
+	removeAccessOfOneGroup: removeAccessOfOneGroup,
 }

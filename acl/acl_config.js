@@ -18,7 +18,7 @@ const DefaultRoles = {
   READ: "read",
 };
 
-const DefaultAdminRoles = new Map([
+const DefaultAboveRoles = new Map([
   [DefaultRoles.OWNER, null],
   [DefaultRoles.AMDIN, DefaultRoles.OWNER],
   [DefaultRoles.READ_WRITE, DefaultRoles.AMDIN],
@@ -36,7 +36,7 @@ const MemberRoles = {
   READ_DETAIL: "read_detail",
 };
 
-const MemberAdminRoles = new Map([
+const MemberAboveRoles = new Map([
   [MemberRoles.OWNER, null],
   [MemberRoles.AMDIN, MemberRoles.OWNER],
   [MemberRoles.READ_WRITE, MemberRoles.AMDIN],
@@ -55,7 +55,7 @@ const EventRoles = {
   PUBLISH: "publish",
 };
 
-const MemberAdminRoles = new Map([
+const MemberAboveRoles = new Map([
   [EventRoles.OWNER, null],
   [EventRoles.AMDIN, EventRoles.OWNER],
   [EventRoles.READ_WRITE, EventRoles.AMDIN],
@@ -93,31 +93,37 @@ const getRoles = (propertyType) => {
   }
 }
 
-const getAdminRoles = (propertyType) => {
+const getAllAboveRoles = (propertyType) => {
   switch (propertyType) {
     case PropertyType.MEMBER:
-      return Object.values(MemberAdminRoles);
+      return MemberAboveRoles;
     case PropertyType.EVENT:
-      return Object.values(MemberAdminRoles);
+      return MemberAboveRoles;
     default:
-      return Object.values(DefaultAdminRoles);
+      return DefaultAboveRoles;
   }
+}
+
+const getAboveRole = (propertyType, role) => {
+  return getAllAboveRoles(propertyType).get(role);
 }
 
 // Find the role above and including targetRole.
 // Return undefined if targetRole and propertyType does not match.
 const getAboveRoles = (propertyType, targetRole) => {
   const aboveRoles = [];
-  let adminRoleMap = getAdminRoles(propertyType);
+  let adminRoleMap = getAllAboveRoles(propertyType);
   let role = targetRole;
   while (adminRoleMap.has(role)) {
     aboveRoles.push(role);
     role = adminRoleMap.get(role);
   }
+  return aboveRoles;
 }
 
 module.exports = {
   getPropertyType: getPropertyType,
   getRoles: getRoles,
+  getAboveRole: getAboveRole,
   getAboveRoles: getAboveRoles,
 }
