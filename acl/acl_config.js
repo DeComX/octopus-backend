@@ -122,6 +122,8 @@ const getAboveRoles = (propertyType, targetRole) => {
 }
 
 module.exports = {
+  listPropertyTypes = listPropertyTypes,
+  isPropertyBased: isPropertyBased,
   getPropertyType: getPropertyType,
   getRoles: getRoles,
   getAboveRole: getAboveRole,

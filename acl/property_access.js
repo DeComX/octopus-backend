@@ -6,7 +6,7 @@ const Group = require('./group');
 const AccessSchema = new Schema({
   propertyId: String,
   propertyType: String,
-  groups: [String],
+  group: String,
   role: String
 });
 
@@ -49,14 +49,12 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
     }
     const accessibleGroups = new Map();
     for (row of accessibleRows) {
-      for (group of row.groups) {
-        accessibleGroups.set(group, true);
-      }
+      accessibleGroups.set(row.group, true);
     }
     return Group.isInGroup(userId, Array.from(accessibleGroups.keys()), false);
   })
   .catch(err => {
-    return Promise.resolve({ err: err });
+    return Promise.reject(err);
   })
   .then(isAccessible => {
     return Promise.resolve({ isAccessible: isAccessible });
@@ -78,17 +76,17 @@ const mutateAccessOfOneUserHelper = (requesterId, candidateId, op, propertyId, p
   checkAccessHelper(requesterId, propertyId, propertyType, TypeAndRole.getAboveRole(targetRole))
   .then(result => {
     if (result.err) {
-    	return Promise.resolve({ err: err }); 
+    	return Promise.reject(err); 
     }
     if (!result.isAccessible) {
-      return Promise.resolve({ err: new Error('PERMISSION_DENIED') });
+      return Promise.reject(new Error('PERMISSION_DENIED'));
     }
     const groupName = getDefaultGroupName(propertyId, propertyType, targetRole);
     switch (op) {
       case 'add':
         Group.addToGroup(requesterId, groupName, candidateId, (err, value) => {
           if (!err) {
-            return Promise.resolve({ err: err });
+            return Promise.reject(err);
           }
           return Promise.resolve({});
         });
@@ -96,13 +94,13 @@ const mutateAccessOfOneUserHelper = (requesterId, candidateId, op, propertyId, p
       case 'remove':
         Group.removeFromGroup(requesterId, groupName, candidateId, (err, value) => {
           if (!err) {
-            return Promise.resolve({ err: err });
+            return Promise.reject(err);
           }
           return Promise.resolve({});
         });
         break;
       default:
-        return Promise.resolve({ err: new Error(`Invalid operation ${op}.`) });
+        return Promise.reject(new Error(`Invalid operation ${op}.`));
     }
   });
 }
@@ -118,7 +116,7 @@ const addAccessOfOneUser = (requesterId, candidateId, propertyId, propertyType, 
 }
 
 const removeAccessOfOneUser = (requesterId, candidateId, propertyId, propertyType, role, callback) => {
-  mutateAccessHelper(requesterId, candidateId, 'add', propertyId, propertyType, role).
+  mutateAccessHelper(requesterId, candidateId, 'remove', propertyId, propertyType, role).
   then(err => {
     if (err) {
       return callback(err, null);
@@ -127,10 +125,192 @@ const removeAccessOfOneUser = (requesterId, candidateId, propertyId, propertyTyp
   })
 }
 
+// op: 'add' or 'remove'
+// targetRole is the role of candidate instead of requester.
+// Return Promise({ err: error })
+const mutateAccessOfOneGroupHelper = (requesterId, groupName, op, propertyId, propertyType, targetRole) => {
+  checkAccessHelper(requesterId, propertyId, propertyType, TypeAndRole.getAboveRole(targetRole))
+  .then(result => {
+    if (result.err) {
+    	return Promise.reject(err); 
+    }
+    if (!result.isAccessible) {
+      return Promise.reject(new Error('PERMISSION_DENIED'));
+    }
+    return Group.isExist(groupName);
+  })
+  .then(exists => {
+    if (!exists) {
+      return Promise.reject(new Error(`Group ${groupName} does not exists.`));
+    }
+    switch (op) {
+      case 'add':
+        const newAccessRow = new AccessModel({
+          propertyId: propertyId,
+          propertyType: propertyType,
+          group: groupName,
+          role: targetRole
+        })
+        return newAccessRow.save();
+      case 'remove':
+        return AccessModel.findOneAndDelete({
+          propertyId: propertyId,
+          propertyType: propertyType,
+          group: groupName,
+          role: targetRole
+        }).exec();
+      default:
+        return Promise.reject(new Error(`Invalid operation ${op}.`));
+    }
+  })
+  .then(result => {
+    return Promise.resolve({});
+  })
+  .catch(err => {
+    return Promise.reject(err);
+  });
+}
+
+const addAccessOfOneGroup = (requesterId, groupName, propertyId, propertyType, role, callback) => {
+  mutateAccessOfOneGroupHelper(requesterId, groupName, 'add', propertyId, propertyType, role).
+  then(err => {
+    if (err) {
+      return callback(err, null);
+    }
+    return callback(null, null);
+  })
+}
+
+const removeAccessOfOneGroup = (requesterId, groupName, propertyId, propertyType, role, callback) => {
+  mutateAccessHelper(requesterId, groupName, 'remove', propertyId, propertyType, role).
+  then(err => {
+    if (err) {
+      return callback(err, null);
+    }
+    return callback(null, null);
+  })
+}
+
+const encodeProperty = (propertyId, propertyType) => {
+  return TypeAndRole.isPropertyBased(propertyType) ? propertyId : propertyType;
+}
+
+// 
+// Returns: Promise({
+//            err: error,
+//            access: [{
+//                       propertyId: String,
+//                       propertyType: String,
+//                       roles: [String]
+//                     }]
+//          })
+const listRolesOnPropertiesHelper = (requesterId, propertyConditionArray) => {
+  const listMyGroupsPromise = new Promise((resolve, reject) => {
+    Group.listMyGroups(requesterId, (err, result) => {
+      if (err) {
+        reject(err);
+      }
+      if (!result || !result.access || !result.access.length) {
+        resolve({ accessGroups: [] });
+      }
+      resolve({ accessGroups: result.access });
+    });
+  });
+  listMyGroupsPromise
+  .then(result => {
+    const groupConditionArray = result.accessGroups.map(group => {
+      return { 'name': group };
+    });
+    const condition = {
+      $and: [
+        { $or: propertyConditionArray },
+        { $or: groupConditionArray }
+      ]
+    }
+    return AccessModel.find(condition).exec();
+  })
+  .catch(err => {
+    throw new Error(`Failed to listMyGroups. Error: ${err}`);
+  })
+  .then(rows => {
+  	const propertyMap = new Map();
+    for (row of rows) {
+      const idf = encodeProperty(row.propertyId, row.propertyType);
+      if (!propertyMap.has(idf)) {
+        propertyMap.set(idf, {
+          propertyId: row.propertyId,
+          propertyType: row.propertyType,
+          roles: []
+        });
+      }
+      propertyMap.get(idf)['roles'].push(row.role);
+    }
+    const accessPropertyArray = Array.from(propertyMap.values()).filter(ap => {
+      return ap.roles && ap.roles.length > 0;
+    });
+    return Promise.resolve({ access: accessPropertyArray });
+  })
+  .catch(err => {
+    return Promise.reject(err);
+  });
+}
+
+// propertyArray: [{propertyId: String, propertyType: String}, ...]
+// Returns: callback(err, {
+//            err: error,
+//            access: [{
+//                       propertyId: String,
+//                       propertyType: String,
+//                       roles: [String]
+//                     }]
+//          })
+const listRolesOnProperties = (requesterId, propertyArray, callback) => {
+  if (!propertyArray || !propertyArray.length) {
+    return Promise.resolve({ access: [] });
+  }
+  const propertyConditionArray = propertyArray.map(property => {
+    return findPropertyCondition(property.propertyId, property.propertyType);
+  });
+  listRolesOnPropertiesHelper(requesterId, propertyConditionArray)
+  .then(result => {
+    return callback(null, result);
+  })
+  .catch(err => {
+    return callback(err, null);
+  });
+}
+
+// propertyTypeArray: [type]
+// Returns: callback(err, {
+//            err: error,
+//            access: [{
+//                       propertyId: String,
+//                       propertyType: String,
+//                       roles: [String]
+//                     }]
+//          })
+const listRolesOnPropertyTypes = (requesterId, propertyTypeArray, callback) => {
+  if (!propertyTypeArray || !propertyTypeArray.length) {
+    return Promise.resolve({ access: [] });
+  }
+  const propertyConditionArray = propertyTypeArray.map(type => {
+    return { 'propertyType': type };
+  });
+  listRolesOnPropertiesHelper(requesterId, propertyConditionArray)
+  .then(result => {
+    return callback(null, result);
+  })
+  .catch(err => {
+    return callback(err, null);
+  });
+}
+
 module.exports = {
-	checkAccess: checkAccess,
-	addAccessOfOneUser: addAccessOfOneUser,
-	removeAccessOfOneUser: removeAccessOfOneUser,
-	addAccessOfOneGroup: addAccessOfOneGroup,
-	removeAccessOfOneGroup: removeAccessOfOneGroup,
+  checkAccess: checkAccess,
+  addAccessOfOneUser: addAccessOfOneUser,
+  removeAccessOfOneUser: removeAccessOfOneUser,
+  addAccessOfOneGroup: addAccessOfOneGroup,
+  removeAccessOfOneGroup: removeAccessOfOneGroup,
+  listRolesOnProperties: listRolesOnProperties,
+  listRolesOnPropertyTypes: listRolesOnPropertyTypes
 }

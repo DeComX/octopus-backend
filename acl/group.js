@@ -145,6 +145,40 @@ const createGroup = (requesterId, groupName, callback) => {
   });
 }
 
+// callback: (err, {name: String, ownerIds: [String], userIds: [String]})
+const getGroup = (requesterId, groupName, callback) => {
+  isInGroup(requesterId, [groupName], false)
+  .then(isMember => {
+    if (!isMember) {
+      return callback(new Error(`No permission to get group ${groupName}`));
+    }
+    return GroupModel.findOne({ name: groupName }).exec();
+  })
+  .catch(err => {
+    throw err;
+  })
+  .then(group => {
+    return callback(null, group);
+  })
+  .catch(err => {
+    return callback(err, null);
+  })
+}
+
+// Return Promise(boolean).
+const isExist = (groupName) => {
+  GroupModel.findOne({ name: groupName }).exec()
+  .then(result => {
+    if (!result) {
+      return Promise.resolve(false);
+    }
+    return Promise.resolve(true);
+  })
+  .catch(err => {
+    return Promise.resolve(false);
+  })
+}
+
 const addToGroup = (requesterId, groupName, userId, callback) => {
   isInGroup(requesterId, [groupName])
   .then(accessible => {
@@ -206,6 +240,7 @@ const removeFromGroup = (requesterId, groupName, isRemoveOwner, userId, callback
 }
 
 // callback: (error, {own: [groups], access: [groups]} )
+// Access groups is superset of own groups.
 const listMyGroups = (requesterId, callback) => {
   let ownGroups = [];
   let accessGroups = [];
@@ -228,6 +263,9 @@ const listMyGroups = (requesterId, callback) => {
     accessGroups = Array.from(dedupGroups.keys());
     return callback(null, { own: ownGroups, access: accessGroups});
   })
+  .catch(err => {
+    return callback(err, null);
+  })
 }
 
 module.exports = {
@@ -235,6 +273,8 @@ module.exports = {
   init: init,
   isInGroup, isInGroup,
   createGroup: createGroup,
+  getGroup: getGroup,
+  isExist: isExist,
   addToGroup: addToGroup,
   removeFromGroup: removeFromGroup,
   listMyGroups: listMyGroups
