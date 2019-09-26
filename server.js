@@ -11,6 +11,7 @@ const organizations = require("./routes/api/organizations");
 const urls = require("./routes/api/urls");
 const publicurl = require("./routes/url");
 const config = require("./config");
+const aclApi = require("./acl/acl_api");
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use("/api/v1/sessions", sessions);
 app.use("/api/v1/events", events);
 app.use("/api/v1/organizations", organizations);
 app.use("/api/v1/campaigns", campaigns);
+app.use("/api/v1/acl", aclApi);
 
 app.use('/static', express.static(path.join(__dirname, 'files')))
 
