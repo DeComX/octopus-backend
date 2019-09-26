@@ -281,6 +281,19 @@ const listMyGroups = (requesterId, callback) => {
   })
 }
 
+// Do not expose this function through routes.
+// groupArray: [{name: String, ownerId: String}]
+const createGroupsInternal = (groupArray) => {
+  return groupArray.map(item => {
+    const newGroup = new GroupModel({
+      name: item.group,
+      ownerIds: [item.ownerId],
+      userIds: []
+    });
+    return newGroup.save();
+  });
+}
+
 module.exports = {
   // Init should only be caught once when bootstrapping the system.
   init: init,
@@ -290,5 +303,6 @@ module.exports = {
   isExist: isExist,
   addToGroup: addToGroup,
   removeFromGroup: removeFromGroup,
-  listMyGroups: listMyGroups
+  listMyGroups: listMyGroups,
+  createGroupsInternal: createGroupsInternal,
 }

@@ -319,6 +319,34 @@ const listRolesOnPropertyTypes = (requesterId, propertyTypeArray, callback) => {
   });
 }
 
+const createAclForNewProperty = (requesterId, propertyId, propertyType) => {
+  const accessArray = AclConfig.getRoles(propertyType).map(role => {
+    let name = `group_${propertyType}_${role}`;
+    if (!AclConfig.isPropertyBased(propertyType)) {
+      name = `group_${propertyType}_${propertyId}_${role}`;
+    }
+    return new AccessModel({
+      propertyId: propertyId,
+      propertyType: propertyType,
+      group: name,
+      role: role
+    });
+  });
+  const groupArray = accessArray.map(access => {
+    return {
+      group: access.group,
+      ownerId: requesterId
+    };
+  });
+  Promise.all(Group.createGroupsInternal(groupArray))
+  .then(result => {
+    return Promise.all(accessArray.map( access => access.save()));
+  })
+  .catch(err => {
+    return Promise.reject(err);
+  });
+}
+
 module.exports = {
   checkAccess: checkAccess,
   addAccessOfOneUser: addAccessOfOneUser,
@@ -326,5 +354,6 @@ module.exports = {
   addAccessOfOneGroup: addAccessOfOneGroup,
   removeAccessOfOneGroup: removeAccessOfOneGroup,
   listRolesOnProperties: listRolesOnProperties,
-  listRolesOnPropertyTypes: listRolesOnPropertyTypes
+  listRolesOnPropertyTypes: listRolesOnPropertyTypes,
+  createAclForNewProperty: createAclForNewProperty
 }

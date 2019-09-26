@@ -6,12 +6,19 @@ const AclConfig = require('../acl/acl_config');
 
 const fieldsHelper = require('../models/fields/helper');
 
-const doInsert = (model, processor, update, res) => {
+const doInsert = (model, processor, update, userId, res) => {
   if (!update._id) {
     delete update._id;
   }
   new model(update).save()
-    .then((data) => processor.postProcess(data, res))
+    .then((data) => {
+      processor.postProcess(data, res)
+      return ACL.createAclForNewProperty(userId, data._id, model.collection.collectionName);
+    })
+    .catch(err => {
+      throw err;
+    })
+    .then(result => res.status(200).json({}))
     .catch((err) => res.status(400).json({"errReason": err}));
 }
 
@@ -59,7 +66,7 @@ const postHandler = (model, processor) => (req, res) => {
           }
         })
       } else {
-        doInsert(model, processor, update, res);
+        doInsert(model, processor, update, userId, res);
       }
     }
     // to update
