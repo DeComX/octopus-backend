@@ -1,12 +1,24 @@
+const Campaign = require("../models/Campaign");
+const Event = require("../models/Event");
+const Organization = require("../models/Organization");
+const Session = require("../models/Session");
+const User = require("../models/User");
+
 const PropertyType = {
-  CAMPAIGN: "campaign",
-  CHANNEL: "channel",
-  EVENT: "event",
-  IMAGE: "image",
-  MEMBER: "member",
-  ORGANIZATION: "organization",
-  SESSION: "session",
+  CAMPAIGN: Campaign.collection.collectionName,
+  CHANNEL: "channels",
+  EVENT: Event.collection.collectionName,
+  IMAGE: "images",
+  USER: User.collection.collectionName,
+  ORGANIZATION: Organization.collection.collectionName,
+  SESSION: Session.collection.collectionName,
 };
+
+const CreateRole = "create";
+
+const getCreatorGroup = (propertyType) => {
+  return `group_${propertyType}_creators`;
+}
 
 /*****************
  * Default roles.
@@ -26,9 +38,9 @@ const DefaultAboveRoles = new Map([
 ]);
 
 /*****************
- * Member roles.
+ * User roles.
  *****************/
-const MemberRoles = {
+const UserRoles = {
   OWNER: "owner",
   AMDIN: "admin",
   READ_WRITE: "read_write",
@@ -36,12 +48,12 @@ const MemberRoles = {
   READ_DETAIL: "read_detail",
 };
 
-const MemberAboveRoles = new Map([
-  [MemberRoles.OWNER, null],
-  [MemberRoles.AMDIN, MemberRoles.OWNER],
-  [MemberRoles.READ_WRITE, MemberRoles.AMDIN],
-  [MemberRoles.READ_METADATA, MemberRoles.READ_WRITE],
-  [MemberRoles.READ_METADATA, MemberRoles.READ_METADATA],
+const UserAboveRoles = new Map([
+  [UserRoles.OWNER, null],
+  [UserRoles.AMDIN, UserRoles.OWNER],
+  [UserRoles.READ_WRITE, UserRoles.AMDIN],
+  [UserRoles.READ_METADATA, UserRoles.READ_WRITE],
+  [UserRoles.READ_METADATA, UserRoles.READ_METADATA],
 ]);
 
 /*****************
@@ -55,7 +67,7 @@ const EventRoles = {
   PUBLISH: "publish",
 };
 
-const MemberAboveRoles = new Map([
+const EventAboveRoles = new Map([
   [EventRoles.OWNER, null],
   [EventRoles.AMDIN, EventRoles.OWNER],
   [EventRoles.READ_WRITE, EventRoles.AMDIN],
@@ -95,10 +107,10 @@ const getRoles = (propertyType) => {
 
 const getAllAboveRoles = (propertyType) => {
   switch (propertyType) {
-    case PropertyType.MEMBER:
-      return MemberAboveRoles;
+    case PropertyType.user:
+      return UserAboveRoles;
     case PropertyType.EVENT:
-      return MemberAboveRoles;
+      return EventAboveRoles;
     default:
       return DefaultAboveRoles;
   }
@@ -122,9 +134,10 @@ const getAboveRoles = (propertyType, targetRole) => {
 }
 
 module.exports = {
-  listPropertyTypes = listPropertyTypes,
+  CreateRole: CreateRole,
+  getCreatorGroup: getCreatorGroup,
+  listPropertyTypes: listPropertyTypes,
   isPropertyBased: isPropertyBased,
-  getPropertyType: getPropertyType,
   getRoles: getRoles,
   getAboveRole: getAboveRole,
   getAboveRoles: getAboveRoles,

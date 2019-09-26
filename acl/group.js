@@ -1,3 +1,4 @@
+const AclConfig = require('./acl_config');
 /*
  * Group for ACL.
  * Each group contains a list of owners and a list of members. Nested group
@@ -36,6 +37,11 @@ const init = (requesterId, callback) => {
   if (!requesterId) {
     return callback(new Error('Missing system owner user ID.'), null);
   }
+
+  const groupCreatorGroups = [GROUP_GROUP_CREATORS].concat(
+    ...AclConfig.listPropertyTypes().map(type => {
+      return AclConfig.getCreatorGroup(type);
+  }));
   GroupModel.findOne({ name: GROUP_SYSTEM_ADMIN }).exec()
   .then(result => {
     if (result) {
@@ -52,21 +58,28 @@ const init = (requesterId, callback) => {
     throw err;
   })
   .then(result => {
-    return GroupModel.findOne({ name: GROUP_GROUP_CREATORS }).exec();
+    return groupCreatorGroups.map(group => {
+      GroupModel.findOne({ name: group }).exec();
+    });
   })
   .catch(err => {
     throw err;
   })
-  .then(result => {
-    if (result) {
-      return callback(new Error(`${GROUP_GROUP_CREATORS} already exists.`), null);
-    }
-    let group_group_creators = new GroupModel({
-      name: GROUP_GROUP_CREATORS,
-      ownerIds: [requesterId],
-      userIds: []
-    })
-    return group_group_creators.save();
+  .then(results => {
+  	const groupToCreate = [];
+  	for (let i = 0; i < results.length; i++) {
+  	  if (!results[i]) {
+  	    groupToCreate.push(groupCreatorGroups[i]);
+  	  }
+  	}
+  	return groupToCreate.map(groupName => {
+  	  let group = new GroupModel({
+        name: groupName,
+        ownerIds: [requesterId],
+        userIds: []
+      })
+      return group.save();
+  	});
   })
   .catch(err => {
   	throw err;

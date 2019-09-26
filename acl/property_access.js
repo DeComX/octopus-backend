@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const TypeAndRole = require('./acl_config');
 const Group = require('./group');
+const AclConfig = require('./acl_config');
 
 const AccessSchema = new Schema({
   propertyId: String,
@@ -28,9 +29,22 @@ const findPropertyCondition = (propertyId, propertyType) => {
   return { 'propertyId': propertyId };
 }
 
+const checkCreateAccess = (requesterId, propertyType) => {
+  Group.isInGroup(userId, AclConfig.getCreatorGroup(propertyType), false)
+  .then(isAccessible => {
+    return Promise.resolve({ isAccessible: isAccessible });
+  })
+  .catch(err => {
+    return Promise.reject(err);
+  });
+}
+
 // Return Promise({ err: error, isAccessible: boolean })
 // accessRow is the AccessSet with given targetRole.
 const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) => {
+  if (targetRole === AclConfig.CreateRole) {
+    return checkCreateAccess(requesterId, propertyType);
+  }
   const aboveRolesList = TypeAndRole.getAboveRoles(propertyType, targetRole);
   const aboveRolesMap = aboveRoleList.reduce((map, role) => {
     map.set(role, true);
