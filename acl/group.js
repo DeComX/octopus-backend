@@ -192,7 +192,7 @@ const isExist = (groupName) => {
   })
 }
 
-const addToGroup = (requesterId, groupName, userId, callback) => {
+const addToGroup = (requesterId, groupName, userId, isAddOwner, callback) => {
   isInGroup(requesterId, [groupName])
   .then(accessible => {
     if (!accessible) {
@@ -222,7 +222,7 @@ const addToGroup = (requesterId, groupName, userId, callback) => {
   });
 }
 
-const removeFromGroup = (requesterId, groupName, isRemoveOwner, userId, callback) => {
+const removeFromGroup = (requesterId, groupName, userId, isRemoveOwner, callback) => {
   isInGroup(requesterId, [groupName], true)
   .then(accessible => {
     if (!accessible) {

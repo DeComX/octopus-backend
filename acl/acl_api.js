@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const { check, body, validationResult } = require('express-validator');
-const GroupModule = require('./group');
-const ConfigModule = require('./acl_config');
 const AccessModule = require('./property_access');
 
 router.post('/addOneUser', [
@@ -129,4 +127,4 @@ router.post('/listRolesOnPropertyTypes', [
 	});
 });
 
-module.exports = router
+module.exports = router;
