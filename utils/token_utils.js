@@ -4,7 +4,7 @@ var jwt = require('jsonwebtoken');
 var createToken = function(user) {
   return jwt.sign({
     id: user.id,
-    emai: user.email,
+    email: user.email,
     name: user.name,
     avatar: {name: user.avatar.name}
   }, config.secretOrKey,
@@ -14,6 +14,7 @@ var createToken = function(user) {
 };
 
 module.exports = {
+  createToken: createToken,
   generateToken: function(req, res, next) {
     req.token = "Bearer " + createToken(req.user);
     return next();
