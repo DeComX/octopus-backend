@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const fieldsHelper = require('./fields/helper');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
-const collectionName = "campaigns";
+const collectionName = "campaign";
 const CampaignSchema = new Schema({
   ...fieldsHelper.getFields(collectionName),
   created_at: {
@@ -14,7 +14,7 @@ const CampaignSchema = new Schema({
     type: Date,
     required: true,
   },
-});
+}, {collection: collectionName});
 
 CampaignSchema.plugin(mongoosePaginate);
 

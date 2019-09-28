@@ -30,7 +30,7 @@ app.use(cors(corsOptions));
 
 // Bodyparser middleware
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 app.use(passport.initialize());
@@ -43,6 +43,13 @@ passport.serializeUser(function(user, done) {
 passport.deserializeUser(function(user, done) {
   done(null, user);
 });
+
+// const group = require('./acl/group');
+// group.init(config.group_admin, (err, value) => {
+//   if (err !== null) {
+//     return console.log(err);
+//   }
+// });
 
 // DB Config
 const options = {
@@ -57,12 +64,12 @@ mongoose
 // Routes
 app.all('*', require("./middleware/auth"));
 app.use("/api/v1/publicurl", publicurl);
-app.use("/api/v1/urls", urls);
-app.use("/api/v1/users", users);
-app.use("/api/v1/sessions", sessions);
-app.use("/api/v1/events", events);
-app.use("/api/v1/organizations", organizations);
-app.use("/api/v1/campaigns", campaigns);
+app.use("/api/v1/url", urls);
+app.use("/api/v1/user", users);
+app.use("/api/v1/session", sessions);
+app.use("/api/v1/event", events);
+app.use("/api/v1/organization", organizations);
+app.use("/api/v1/campaign", campaigns);
 app.use("/api/v1/acl", aclApi);
 app.use("/api/v1/group", groupApi);
 

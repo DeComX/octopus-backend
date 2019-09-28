@@ -6,19 +6,20 @@ const AclConfig = require('./acl_config');
  * Group name is unique.
  * Group owner can add/remove memeber/owner.
  * Only memebers in GROUP_GROUP_CREATORS can create new groups.
- * PROTECTED_GROUPS contains whitelisted group names, which cannot be used. 
+ * PROTECTED_GROUPS contains whitelisted group names, which cannot be used.
  */
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const collectionName = 'group';
 const GroupSchema = new Schema({
   // name is unique.
   name: String,
   ownerIds: [String],
   userIds: [String]
-});
+}, {collection: collectionName});
 
-const GroupModel = mongoose.model('group', GroupSchema);
+const GroupModel = mongoose.model(collectionName, GroupSchema);
 
 // Everyone including non users.
 const GROUP_ALL = 'GROUP_ALL';
@@ -108,21 +109,23 @@ const isInGroup = (userId, groupNameArray, isOwner) => {
       groupFilter.push({ name: groupName })
     });
 
-  GroupModel.find(groupFilter)
-  .then(groups => {
-    if (!groups || !groups.length) {
-      return Promise.resolve(false);
-    }
-    for (group of groups) {
-      if (group.ownerIds.indexOf(userId) !== -1) {
-        return Promise.resolve(true);
+  return new Promise((resolve, reject) => {
+    GroupModel.find({$or: groupFilter})
+    .then(groups => {
+      if (!groups || !groups.length) {
+        resolve(false);
       }
-      if (!isOwner && group.userIds.indexOf(userId) !== -1) {
-        return Promise.resolve(true);
+      for (group of groups) {
+        if (group.ownerIds.indexOf(userId) !== -1) {
+          resolve(true);
+        }
+        if (!isOwner && group.userIds.indexOf(userId) !== -1) {
+          resolve(true);
+        }
       }
-    }
-    return Promise.resolve(false);
-  })
+      resolve(false);
+    })
+  });
 }
 
 const createGroup = (requesterId, groupName, callback) => {
@@ -180,16 +183,18 @@ const getGroup = (requesterId, groupName, callback) => {
 
 // Return Promise(boolean).
 const isExist = (groupName) => {
-  GroupModel.findOne({ name: groupName }).exec()
-  .then(result => {
-    if (!result) {
-      return Promise.resolve(false);
-    }
-    return Promise.resolve(true);
-  })
-  .catch(err => {
-    return Promise.resolve(false);
-  })
+  return new Promise((resolve, reject) => {
+    GroupModel.findOne({ name: groupName }).exec()
+    .then(result => {
+      if (!result) {
+        resolve(false);
+      }
+      resolve(true);
+    })
+    .catch(err => {
+      resolve(false);
+    })
+  });
 }
 
 const addToGroup = (requesterId, groupName, userId, isAddOwner, callback) => {
@@ -257,10 +262,10 @@ const removeFromGroup = (requesterId, groupName, userId, isRemoveOwner, callback
 const listMyGroups = (requesterId, callback) => {
   let ownGroups = [];
   let accessGroups = [];
-  GroupModel.find({ ownerIds: { $elemMatch: requesterId } }).exec()
+  GroupModel.find({ ownerIds: requesterId }).exec()
   .then(ownGroups => {
     ownGroups = ownGroups.map(group => group.name);
-    return GroupModel.find({ userIds: { $elemMatch: requesterId } }).exec();
+    return GroupModel.find({ userIds: requesterId }).exec();
   })
   .catch(err => {
     throw err;

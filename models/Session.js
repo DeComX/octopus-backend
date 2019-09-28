@@ -3,7 +3,7 @@ const Schema = mongoose.Schema;
 const fieldsHelper = require('./fields/helper');
 const mongoosePaginate = require('mongoose-paginate-v2');
 
-const collectionName = "sessions";
+const collectionName = "session";
 const SessionSchema = new Schema({
   ...fieldsHelper.getFields(collectionName),
   created_at: {
@@ -14,7 +14,7 @@ const SessionSchema = new Schema({
     type: Date,
     required: true,
   },
-});
+}, {collection: collectionName});
 
 SessionSchema.plugin(mongoosePaginate);
 

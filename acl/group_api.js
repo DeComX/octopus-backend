@@ -3,18 +3,10 @@ const router = express.Router();
 const { check, body, validationResult } = require('express-validator');
 const GroupModule = require('./group');
 
-router.post('/init', function(req, res) {
-	GroupModule.init(req.user.id, (err, value) => {
-	  if (err !== null) {
-	    return res.status(500).json({error: err});
-	  }
-	  return res.json({});
-	});
-});
-
 router.post('/create', [
     check('group').not().isEmpty(),
   ], function(req, res) {
+  console.log(req.body);
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		return res.status(422).json({ error: errors.array() });
@@ -82,9 +74,10 @@ router.post('/removeUser', [
 });
 
 // Return {own: [groups], access: [groups]}
-router.post('/listGroups', function(req, res) {
+router.get('/listGroups', function(req, res) {
 	GroupModule.listMyGroups(req.user.id, (err, value) => {
 	  if (err !== null) {
+      console.log(err);
 	    return res.status(500).json({error: err});
 	  }
 	  return res.json(value);

@@ -4,7 +4,7 @@ const mongoosePaginate = require('mongoose-paginate-v2');
 const Schema = mongoose.Schema;
 const fieldsHelper = require('./fields/helper');
 
-const collectionName = "users";
+const collectionName = "user";
 const UserSchema = new Schema({
   ...fieldsHelper.getFields(collectionName),
   created_at: {
@@ -15,7 +15,7 @@ const UserSchema = new Schema({
     type: Date,
     required: true,
   },
-});
+}, { collection: collectionName });
 
 UserSchema.plugin(mongoosePaginate);
 
@@ -28,6 +28,7 @@ UserSchema.statics.upsertGoogleUser = function(accessToken, refreshToken, profil
       if (profile._json.hd !== 'abcer.world') {
         return cb("Invalid domain name, only abcer.world is allowed", null);
       }
+      console.log(profile);
       var newUser = new that({
         name: profile.displayName,
         email: profile.emails[0].value,
@@ -37,6 +38,7 @@ UserSchema.statics.upsertGoogleUser = function(accessToken, refreshToken, profil
         },
         updated_at: new Date()
       });
+      console.log(newUser);
       newUser.save(function(error, savedUser) {
         return cb(error, savedUser);
       });

@@ -31,7 +31,7 @@ const processor = {
   checkExistence: checkExistence
 };
 
-var multer  = require('multer');
+var multer = require('multer');
 const uuidv4 = require('uuid/v4');
 const path = require('path');
 var storage = multer.diskStorage({

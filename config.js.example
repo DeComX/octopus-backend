@@ -2,6 +2,7 @@ module.exports = {
   mongoURI: "your-mongo-url",
   secretOrKey: 'your-secret',
   cors_whitelists: ['your-cors-whitelist'],
+  group_admin: "admin_user_id",
   googleAuth: {
     'clientID': 'your-client-id',
     'clientSecret': 'your-client-sceret',

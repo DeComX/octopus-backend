@@ -6,7 +6,7 @@ var createToken = function(user) {
     id: user.id,
     emai: user.email,
     name: user.name,
-    avatar: {name: user.avatar.name}
+    avatar: user.avatar ? {name: user.avatar.name} : {}
   }, config.secretOrKey,
   {
     expiresIn: 60 * 120

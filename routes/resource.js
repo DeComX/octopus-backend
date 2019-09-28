@@ -59,7 +59,7 @@ const postHandler = (model, processor) => (req, res) => {
       if (processor.checkExistence) {
         model.findOne(processor.checkExistence(req)).then(record => {
           if (record) {
-            const name = model.collection.collectionName.slice(0, -1);
+            const name = model.collection.collectionName;
             res.status(400).json({errorReason: name + " already exists"});
           } else {
             doInsert(model, processor, update, res);

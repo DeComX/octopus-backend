@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 // Create Schema
+const collectionName = 'url';
 const UrlSchema = new Schema({
   short: {
     type: String,
@@ -19,6 +20,6 @@ const UrlSchema = new Schema({
   clicks: {
     type: [Date]
   }
-});
+}, { collection: collectionName });
 
-module.exports = Url = mongoose.model("urls", UrlSchema);
+module.exports = Url = mongoose.model(collectionName, UrlSchema);

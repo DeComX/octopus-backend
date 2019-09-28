@@ -3,7 +3,7 @@ const config = require("../config");
 
 module.exports = function(req, res, next) {
   if (req.path.startsWith('/static') ||
-      req.path.startsWith('/api/v1/users/auth') ||
+      req.path.startsWith('/api/v1/user/auth') ||
       req.path.startsWith('/api/v1/publicurl')) {
     return next();
   }

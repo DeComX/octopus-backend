@@ -90,7 +90,7 @@ const mutateAccessOfOneUserHelper = (requesterId, candidateId, op, propertyId, p
   checkAccessHelper(requesterId, propertyId, propertyType, TypeAndRole.getAboveRole(targetRole))
   .then(result => {
     if (result.err) {
-    	return Promise.reject(err); 
+    	return Promise.reject(err);
     }
     if (!result.isAccessible) {
       return Promise.reject(new Error('PERMISSION_DENIED'));
@@ -146,7 +146,7 @@ const mutateAccessOfOneGroupHelper = (requesterId, groupName, op, propertyId, pr
   checkAccessHelper(requesterId, propertyId, propertyType, TypeAndRole.getAboveRole(targetRole))
   .then(result => {
     if (result.err) {
-    	return Promise.reject(err); 
+    	return Promise.reject(err);
     }
     if (!result.isAccessible) {
       return Promise.reject(new Error('PERMISSION_DENIED'));
@@ -209,7 +209,7 @@ const encodeProperty = (propertyId, propertyType) => {
   return TypeAndRole.isPropertyBased(propertyType) ? propertyId : propertyType;
 }
 
-// 
+//
 // Returns: Promise({
 //            err: error,
 //            access: [{
