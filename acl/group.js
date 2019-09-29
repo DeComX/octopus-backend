@@ -329,4 +329,5 @@ module.exports = {
   removeFromGroup: removeFromGroup,
   listMyGroups: listMyGroups,
   createGroupsInternal: createGroupsInternal,
+  GroupModelInternal: GroupModel,
 }
