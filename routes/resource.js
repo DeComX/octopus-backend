@@ -32,6 +32,10 @@ const doUpdate = (model, processor, update, res) => {
 }
 
 const postHandler = (model, processor) => (req, res) => {
+  // if it submits form data with files, the result
+  // will be encoded in payload field of req.body
+  const payload = req.body.payload ? JSON.parse(req.body.payload) : req.body;
+
   const userId = req.user.id;
   const propertyType = model.collection.collectionName;
   const propertyId = payload._id;
@@ -40,9 +44,6 @@ const postHandler = (model, processor) => (req, res) => {
     if (!isAccessible) {
       return res.status(401).json({err: 'No permission to update.'});
     }
-    // if it submits form data with files, the result
-    // will be encoded in payload field of req.body
-    const payload = req.body.payload ? JSON.parse(req.body.payload) : req.body;
     const validator = fieldsHelper.getValidator(model.collection.collectionName);
     const { errors, isValid } = validator(payload);
     if (!isValid) {

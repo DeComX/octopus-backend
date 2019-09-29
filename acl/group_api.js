@@ -6,7 +6,6 @@ const GroupModule = require('./group');
 router.post('/create', [
     check('group').not().isEmpty(),
   ], function(req, res) {
-  console.log(req.body);
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		return res.status(422).json({ error: errors.array() });
@@ -77,7 +76,6 @@ router.post('/removeUser', [
 router.get('/listGroups', function(req, res) {
 	GroupModule.listMyGroups(req.user.id, (err, value) => {
 	  if (err !== null) {
-      console.log(err);
 	    return res.status(500).json({error: err});
 	  }
 	  return res.json(value);

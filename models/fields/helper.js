@@ -6,15 +6,15 @@ const campaign = require('./campaign');
 
 const getFields = (collectionName) => {
   switch(collectionName) {
-    case 'events':
+    case 'event':
       return event.fields;
-    case 'sessions':
+    case 'session':
       return session.fields;
-    case 'users':
+    case 'user':
       return user.fields;
-    case 'organizations':
+    case 'organization':
       return organization.fields;
-    case 'campaigns':
+    case 'campaign':
       return campaign.fields;
     default:
       return {};
@@ -23,15 +23,15 @@ const getFields = (collectionName) => {
 
 const getValidator = (collectionName) => {
   switch(collectionName) {
-    case 'events':
+    case 'event':
       return event.validator;
-    case 'sessions':
+    case 'session':
       return session.validator;
-    case 'users':
+    case 'user':
       return user.validator;
-    case 'organizations':
+    case 'organization':
       return organization.validator;
-    case 'campaigns':
+    case 'campaign':
       return campaign.validator;
     default:
       return {};

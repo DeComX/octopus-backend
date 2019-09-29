@@ -30,12 +30,14 @@ const findPropertyCondition = (propertyId, propertyType) => {
 }
 
 const checkCreateAccess = (requesterId, propertyType) => {
-  Group.isInGroup(userId, AclConfig.getCreatorGroup(propertyType), false)
-  .then(isAccessible => {
-    return Promise.resolve({ isAccessible: isAccessible });
-  })
-  .catch(err => {
-    return Promise.reject(err);
+  return new Promise((resolve, reject) => {
+    Group.isInGroup(requesterId, [AclConfig.getCreatorGroup(propertyType)], false)
+    .then(isAccessible => {
+      resolve({ isAccessible: isAccessible });
+    })
+    .catch(err => {
+      reject(err);
+    });
   });
 }
 
@@ -50,29 +52,33 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
     map.set(role, true);
     return map;
   }, new Map());
-  AccessModel.find( findPropertyCondition(propertyId, propertyType) ).exec()
-  .then(accessRows => {
-    if (!accessRows || !accessRows.length) {
-      return Promise.resolve({
-        err: new Error("Cannot find the property")
-  	  });
-    }
-    const accessibleRows = accessRows.filter(row => aboveRolesMap.has(row));
-    if (!accessibleRows || !accessibleRows.length) {
-      return Promise.resolve({ isAccessible: false });
-    }
-    const accessibleGroups = new Map();
-    for (row of accessibleRows) {
-      accessibleGroups.set(row.group, true);
-    }
-    return Group.isInGroup(userId, Array.from(accessibleGroups.keys()), false);
-  })
-  .catch(err => {
-    return Promise.reject(err);
-  })
-  .then(isAccessible => {
-    return Promise.resolve({ isAccessible: isAccessible });
-  })
+  return new Promise((resolve, reject) => {
+    AccessModel.find( findPropertyCondition(propertyId, propertyType) ).exec()
+    .then(accessRows => {
+      if (!accessRows || !accessRows.length) {
+        resolve({
+          err: new Error("Cannot find the property")
+        });
+      }
+      const accessibleRows = accessRows.filter(row => aboveRolesMap.has(row));
+      if (!accessibleRows || !accessibleRows.length) {
+        resolve({ isAccessible: false });
+      }
+      const accessibleGroups = new Map();
+      for (row of accessibleRows) {
+        accessibleGroups.set(row.group, true);
+      }
+      Group
+        .isInGroup(userId, Array.from(accessibleGroups.keys()), false)
+        .then(accessible => resolve({isAccessible: accessible}));
+    })
+    .catch(err => {
+      reject(err);
+    })
+    .then(isAccessible => {
+      resolve({ isAccessible: isAccessible });
+    })
+  });
 }
 
 // callback = (err: boolean) => {}

@@ -20,6 +20,7 @@ const GroupSchema = new Schema({
 }, {collection: collectionName});
 
 const GroupModel = mongoose.model(collectionName, GroupSchema);
+const UserModel = require('../models/User');
 
 // Everyone including non users.
 const GROUP_ALL = 'GROUP_ALL';
@@ -31,6 +32,7 @@ const GROUP_SYSTEM_ADMIN = 'GROUP_SYSTEM_ADMIN';
 const GROUP_GROUP_CREATORS = 'GROUP_GROUP_CREATORS';
 
 const PROTECTED_GROUPS = [GROUP_SYSTEM_ADMIN, GROUP_GROUP_CREATORS, GROUP_ALL_USERS, GROUP_ALL];
+
 
 // callback: (err, value) => {}
 // value is always null.
@@ -262,27 +264,44 @@ const removeFromGroup = (requesterId, groupName, userId, isRemoveOwner, callback
 const listMyGroups = (requesterId, callback) => {
   let ownGroups = [];
   let accessGroups = [];
+
   GroupModel.find({ ownerIds: requesterId }).exec()
-  .then(ownGroups => {
-    ownGroups = ownGroups.map(group => group.name);
-    return GroupModel.find({ userIds: requesterId }).exec();
+  .then(queriedOwnGroups => {
+    ownGroups = queriedOwnGroups || [];
+    return GroupModel.find({
+       $and: [{
+         userIds: requesterId
+       }, {
+         ownerIds: { "$ne": requesterId }
+       }]
+     }).exec();
   })
   .catch(err => {
     throw err;
   })
   .then(groups => {
-    const dedupGroups = new Map();
-    for (groupName of ownGroups) {
-      dedupGroups.set(groupName, true);
+    accessGroups = groups || [];
+    let userIds = new Set([]);
+    for (const group of ownGroups.concat(accessGroups)) {
+      for (const userId of group.ownerIds.concat(group.userIds || [])) {
+        userIds.add(userId);
+      }
     }
-    for (group of groups) {
-      dedupGroups.set(group.name, true);
-    }
-    accessGroups = Array.from(dedupGroups.keys());
-    return callback(null, { own: ownGroups, access: accessGroups});
+    return UserModel.where('_id').in(Array.from(userIds)).exec();
   })
   .catch(err => {
     return callback(err, null);
+  })
+  .then(queriedUsers => {
+    let users = queriedUsers.reduce((map, user) => {
+      map[user._id] = user;
+      return map;
+    }, {});
+    return callback(null, {
+      own: ownGroups,
+      access: accessGroups,
+      users: users
+    });
   })
 }
 
