@@ -14,7 +14,11 @@ const Schema = mongoose.Schema;
 const collectionName = 'group';
 const GroupSchema = new Schema({
   // name is unique.
-  name: String,
+  name: {
+    type: String,
+    required: true,
+    unique: true
+  },
   ownerIds: [String],
   userIds: [String]
 }, {collection: collectionName});
@@ -105,11 +109,9 @@ const isInGroup = (userId, groupNameArray, isOwner) => {
     return Promise.resolve(true);
   }
   let groupFilter = [];
-  groupNameArray
-    .filter(groupName => groupName !== GROUP_ALL_USERS && groupName !== GROUP_ALL)
-    .map(groupName => {
-      groupFilter.push({ name: groupName })
-    });
+  allGroups.map(groupName => {
+    groupFilter.push({ name: groupName })
+  });
 
   return new Promise((resolve, reject) => {
     GroupModel.find({$or: groupFilter})
@@ -136,7 +138,7 @@ const createGroup = (requesterId, groupName, callback) => {
     if (!accessible) {
       return callback(new Error(`No permission to create a group.`), null);
     }
-    if (PROTECTED_GROUPS.indexOf(groupName) != -1) {
+    if (PROTECTED_GROUPS.indexOf(groupName) !== -1) {
       return callback(new Error(`Cannot create group ${groupName}`), null);
     }
     return GroupModel.findOne({ name: groupName }).exec();
@@ -199,63 +201,34 @@ const isExist = (groupName) => {
   });
 }
 
-const addToGroup = (requesterId, groupName, userId, isAddOwner, callback) => {
-  isInGroup(requesterId, [groupName])
-  .then(accessible => {
-    if (!accessible) {
-      return callback(new Error(`No permission to add user to the group.`), null);
-    }
-    return GroupModel.findOne({ name: groupName }).exec()
-  })
-  .then(group => {
-    if (!group) {
-      return callback(new Error(`${groupName} not found.`), null);
-    }
-    if (isAddOwner) {
-      group.ownerIds.push(requesterId);
-    } else {
-      group.userId.push(requesterId);
-    }
-    return GroupModel.findOneAndUpdate({ name: groupName }, group).exec();
-  })
-  .catch(err => {
-    throw err;
-  })
-  .then(result => {
-    return callback(null, null);
-  })
-  .catch(err => {
-    return callback(err, null);
+const isOwnerOfGroup = (requesterId, groupName) => {
+  return new Promise((resolve, reject) => {
+    GroupModel
+      .findOne({ name: groupName })
+      .then(group => {
+        if (group) {
+          resolve(group.ownerIds.indexOf(requesterId) !== -1);
+        } else {
+          resolve(false);
+        }
+      })
+      .catch(err => resolve(false));
   });
 }
 
-const removeFromGroup = (requesterId, groupName, userId, isRemoveOwner, callback) => {
-  isInGroup(requesterId, [groupName], true)
+const updateGroup = (requesterId, groupName, update, callback) => {
+  isOwnerOfGroup(requesterId, [groupName])
   .then(accessible => {
     if (!accessible) {
-      return callback(new Error(`No permission to remove user from the group.`), null);
+      throw(new Error(`No permission to add user to the group.`));
     }
-    return GroupModel.findOne({ name: groupName }).exec()
+    return GroupModel.findOneAndUpdate({ name: groupName }, update).exec()
   })
   .then(group => {
-    if (!group) {
-      return callback(new Error(`${groupName} not found.`), null);
-    }
-    if (isRemoveOwner) {
-      group.ownerIds = group.ownerIds.filter(id => id != requesterId);
-    } else {
-      group.userId = group.userId.filter(id => id != requesterId);
-    }
-    return GroupModel.findOneAndUpdate({ name: groupName }, group).exec();
+    callback(null, group);
   })
   .catch(err => {
-    throw err;
-  })
-  .then(result => {
-    return callback(null, null);
-  })
-  .catch(err => {
-    return callback(err, null);
+    callback(err, null);
   });
 }
 
@@ -325,8 +298,7 @@ module.exports = {
   createGroup: createGroup,
   getGroup: getGroup,
   isExist: isExist,
-  addToGroup: addToGroup,
-  removeFromGroup: removeFromGroup,
+  updateGroup: updateGroup,
   listMyGroups: listMyGroups,
   createGroupsInternal: createGroupsInternal,
   GroupModelInternal: GroupModel,

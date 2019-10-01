@@ -36,37 +36,22 @@ router.post('/get', [
 	});
 });
 
-router.post('/addUser', [
+router.post('/updateGroup', [
     check('group').not().isEmpty(),
-    check('userId').not().isEmpty(),
-    check('isAddOwner').not().isEmpty(),
+    check('ownerIds').not().isEmpty()
   ], function(req, res) {
 	const errors = validationResult(req);
 	if (!errors.isEmpty()) {
 		return res.status(422).json({ error: errors.array() });
 	}
-	GroupModule.addToGroup(
-	    req.user.id, req.body.group, req.body.userId, req.body.isAddOwner, (err, value) => {
+  const update = {
+    ownerIds: req.body.ownerIds,
+    userIds: req.body.userIds
+  };
+	GroupModule.updateGroup(
+	    req.user.id, req.body.group, update, (err, value) => {
 	  if (err !== null) {
-	    return res.status(500).json({error: err});
-	  }
-	  return res.json({});
-	});
-});
-
-router.post('/removeUser', [
-    check('group').not().isEmpty(),
-    check('userId').not().isEmpty(),
-    check('isRemoveOwner').not().isEmpty(),
-  ], function(req, res) {
-	const errors = validationResult(req);
-	if (!errors.isEmpty()) {
-		return res.status(422).json({ error: errors.array() });
-	}
-	GroupModule.removeFromGroup(
-	    req.user.id, req.body.group, req.body.userId, req.body.isRemoveOwner, (err, value) => {
-	  if (err !== null) {
-	    return res.status(500).json({error: err});
+	    return res.status(500).json(err.message);
 	  }
 	  return res.json({});
 	});

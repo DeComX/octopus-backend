@@ -30,7 +30,7 @@ app.use(cors(corsOptions));
 
 // Bodyparser middleware
 const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 app.use(passport.initialize());
