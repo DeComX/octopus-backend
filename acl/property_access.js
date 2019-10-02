@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const TypeAndRole = require('./acl_config');
-const Group = require('./group');
+const GroupModule = require('./group');
 const AclConfig = require('./acl_config');
 
 
@@ -70,7 +70,7 @@ const findPropertyCondition = (propertyId, propertyType) => {
 
 const checkCreateAccess = (requesterId, propertyType) => {
   return new Promise((resolve, reject) => {
-    Group.isInGroup(requesterId, [AclConfig.getCreatorGroup(propertyType)], false)
+    GroupModule.isInGroup(requesterId, [AclConfig.getCreatorGroup(propertyType)], false)
     .then(isAccessible => {
       resolve({ isAccessible: isAccessible });
     })
@@ -143,7 +143,7 @@ const mutateAccessOfOneUserHelper = (requesterId, candidateId, op, propertyId, p
     const groupName = getDefaultGroupName(propertyId, propertyType, targetRole);
     switch (op) {
       case 'add':
-        Group.addToGroup(requesterId, groupName, candidateId, (err, value) => {
+        GroupModule.addToGroup(requesterId, groupName, candidateId, (err, value) => {
           if (!err) {
             return Promise.reject(err);
           }
@@ -151,7 +151,7 @@ const mutateAccessOfOneUserHelper = (requesterId, candidateId, op, propertyId, p
         });
         break;
       case 'remove':
-        Group.removeFromGroup(requesterId, groupName, candidateId, (err, value) => {
+        GroupModule.removeFromGroup(requesterId, groupName, candidateId, (err, value) => {
           if (!err) {
             return Promise.reject(err);
           }
@@ -196,7 +196,7 @@ const mutateAccessOfOneGroupHelper = (requesterId, groupName, op, propertyId, pr
     if (!result.isAccessible) {
       return Promise.reject(new Error('PERMISSION_DENIED'));
     }
-    return Group.isExist(groupName);
+    return GroupModule.isExist(groupName);
   })
   .then(exists => {
     if (!exists) {
@@ -265,7 +265,7 @@ const encodeProperty = (propertyId, propertyType) => {
 //          })
 const listRolesOnPropertiesHelper = (requesterId, propertyConditionArray) => {
   const listMyGroupsPromise = new Promise((resolve, reject) => {
-    Group.listMyGroups(requesterId, (err, result) => {
+    GroupModule.listMyGroups(requesterId, (err, result) => {
       if (err) {
         reject(err);
       }
@@ -365,27 +365,39 @@ const listRolesOnPropertyTypes = (requesterId, propertyTypeArray, callback) => {
 }
 
 const createAclForNewProperty = (requesterId, propertyId, propertyType) => {
-  const accessArray = AclConfig.getRoles(propertyType).map(role => {
-    let name = `group_${propertyType}_${role}`;
-    if (!AclConfig.isPropertyBased(propertyType)) {
-      name = `group_${propertyType}_${propertyId}_${role}`;
+  GroupModule.isInGroup(requesterId, AclConfig.getCreatorGroupName(propertyType), false)
+  .then(isAccessible => {
+    if (!isAccessible) {
+      return Promise.reject(new Error("PERMISSION_DENIED"));
     }
-    return new AccessModel({
-      propertyId: propertyId,
-      propertyType: propertyType,
-      group: name,
-      role: role
+    const accessArray = AclConfig.getRoles(propertyType).map(role => {
+      let name = `group_${propertyType}_${role}`;
+      if (!AclConfig.isPropertyBased(propertyType)) {
+        name = `group_${propertyType}_${propertyId}_${role}`;
+      }
+      return new AccessModel({
+        propertyId: propertyId,
+        propertyType: propertyType,
+        group: name,
+        role: role
+      });
     });
-  });
-  const groupArray = accessArray.map(access => {
-    return {
-      group: access.group,
-      ownerId: requesterId
-    };
-  });
-  Promise.all(Group.createGroupsInternal(groupArray))
+    const groupArray = accessArray.map(access => {
+      return {
+        group: access.group,
+        ownerId: requesterId
+      };
+    });
+    return Promise.all(GroupModule.createGroupsInternal(groupArray));
+  })
   .then(result => {
     return Promise.all(accessArray.map( access => access.save()));
+  })
+  .catch(err => {
+    throw err;
+  })
+  .then(result => {
+    return Promise.resolve({});
   })
   .catch(err => {
     return Promise.reject(err);
