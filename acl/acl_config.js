@@ -44,22 +44,22 @@ const UserRoles = {
   OWNER: "owner",
   AMDIN: "admin",
   READ_WRITE: "read_write",
-  READ_METADATA: "read_metadata",
   READ_DETAIL: "read_detail",
+  READ_METADATA: "read_metadata",
 };
 
 const UserAboveRoles = new Map([
   [UserRoles.OWNER, null],
   [UserRoles.AMDIN, UserRoles.OWNER],
   [UserRoles.READ_WRITE, UserRoles.AMDIN],
-  [UserRoles.READ_METADATA, UserRoles.READ_WRITE],
-  [UserRoles.READ_METADATA, UserRoles.READ_METADATA],
+  [UserRoles.READ_DETAIL, UserRoles.READ_WRITE],
+  [UserRoles.READ_METADATA, UserRoles.READ_DETAIL],
 ]);
 
 /*****************
- * Event roles.
+ * Campaign roles.
  *****************/
-const EventRoles = {
+const CampaignRoles = {
   OWNER: "owner",
   AMDIN: "admin",
   READ_WRITE: "read_write",
@@ -67,12 +67,12 @@ const EventRoles = {
   PUBLISH: "publish",
 };
 
-const EventAboveRoles = new Map([
-  [EventRoles.OWNER, null],
-  [EventRoles.AMDIN, EventRoles.OWNER],
-  [EventRoles.READ_WRITE, EventRoles.AMDIN],
-  [EventRoles.READ, EventRoles.READ_WRITE],
-  [EventRoles.PUBLISH, EventRoles.AMDIN],
+const CampaignAboveRoles = new Map([
+  [CampaignRoles.OWNER, null],
+  [CampaignRoles.AMDIN, CampaignRoles.OWNER],
+  [CampaignRoles.READ_WRITE, CampaignRoles.AMDIN],
+  [CampaignRoles.READ, CampaignRoles.READ_WRITE],
+  [CampaignRoles.PUBLISH, CampaignRoles.AMDIN],
 ]);
 
 /****************************************************/
@@ -98,8 +98,8 @@ const getRoles = (propertyType) => {
   switch (propertyType) {
     case PropertyType.MEMBER:
       return Object.values(MemberRoles);
-    case PropertyType.EVENT:
-      return Object.values(EventRoles);
+    case PropertyType.CAMPAIGN:
+      return Object.values(CampaignRoles);
     default:
       return Object.values(DefaultRoles);
   }
@@ -109,8 +109,8 @@ const getAllAboveRoles = (propertyType) => {
   switch (propertyType) {
     case PropertyType.user:
       return UserAboveRoles;
-    case PropertyType.EVENT:
-      return EventAboveRoles;
+    case PropertyType.CAMPAIGN:
+      return CampaignAboveRoles;
     default:
       return DefaultAboveRoles;
   }
