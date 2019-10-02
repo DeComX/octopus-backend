@@ -9,6 +9,7 @@ const events = require("./routes/api/events");
 const campaigns = require("./routes/api/campaigns");
 const organizations = require("./routes/api/organizations");
 const urls = require("./routes/api/urls");
+const channels = require("./routes/api/channels");
 const publicurl = require("./routes/url");
 const config = require("./config");
 const aclApi = require("./acl/acl_api");
@@ -56,6 +57,7 @@ const options = {
   useNewUrlParser: true,
   useFindAndModify: false
 };
+
 mongoose
   .connect(config.mongoURI, options)
   .then(() => console.log("MongoDB successfully connected"))
@@ -65,6 +67,7 @@ mongoose
 app.all('*', require("./middleware/auth"));
 app.use("/api/v1/publicurl", publicurl);
 app.use("/api/v1/url", urls);
+app.use("/api/v1/channel", channels);
 app.use("/api/v1/user", users);
 app.use("/api/v1/session", sessions);
 app.use("/api/v1/event", events);

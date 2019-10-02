@@ -148,7 +148,6 @@ const noPaginationGet = (model, processor, req, res) => {
       processor.postProcess(data || [], res)
     })
     .catch((err) => {
-      console.log(err);
       res.status(400).json({"errReason": err});
     });
 };

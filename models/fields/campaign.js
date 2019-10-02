@@ -5,8 +5,22 @@ const Validator = require("validator");
 const isEmpty = require("is-empty");
 
 const event = require('./event');
-const ChannelSchema = require('./channel');
+const channel = require('./channel');
 const ImageSchema = require('./image');
+
+const channelFields = {
+  ...channel.publicFields,
+  delivered: {
+    type: Boolean,
+    default: false
+  },
+  posters: {
+    type: [ImageSchema]
+  },
+  article: {
+    type: Schema.Types.Mixed
+  }
+};
 
 const CompaignFields = {
   name: {
@@ -30,7 +44,7 @@ const CompaignFields = {
     required: true
   },
   channels: {
-    type: [ChannelSchema]
+    type: [new Schema(channelFields)]
   },
   note: {
     type: String,

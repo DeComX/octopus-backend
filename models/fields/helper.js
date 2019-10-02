@@ -3,6 +3,7 @@ const session = require('./session');
 const user = require('./user');
 const organization = require('./organization');
 const campaign = require('./campaign');
+const channel = require('./channel');
 
 const getFields = (collectionName) => {
   switch(collectionName) {
@@ -16,6 +17,8 @@ const getFields = (collectionName) => {
       return organization.fields;
     case 'campaign':
       return campaign.fields;
+    case 'channel':
+      return channel.fields;
     default:
       return {};
   }
@@ -33,6 +36,8 @@ const getValidator = (collectionName) => {
       return organization.validator;
     case 'campaign':
       return campaign.validator;
+    case 'channel':
+      return channel.validator;
     default:
       return {};
   }
