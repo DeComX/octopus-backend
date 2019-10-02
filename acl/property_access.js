@@ -4,14 +4,53 @@ const TypeAndRole = require('./acl_config');
 const Group = require('./group');
 const AclConfig = require('./acl_config');
 
+
+const collectionName = 'access_control';
 const AccessSchema = new Schema({
   propertyId: String,
   propertyType: String,
   group: String,
   role: String
-});
+}, {collection: collectionName});
 
-const AccessModel = mongoose.model('access_control', AccessSchema);
+const AccessModel = mongoose.model(collectionName, AccessSchema);
+
+const init = (requesterId, callback) => {
+  const types = AclConfig.listPropertyTypes()
+      .filter(type => AclConfig.isPropertyBased(type));
+  const accesses = types.flatMap(type => {
+    return AclConfig.getRoles(type).map(role => {
+      return {
+        propertyType: type,
+        group: AclConfig.getTypeAclGroupName(type, role),
+        role: role,
+      };
+    });
+  });
+  const findTypeAccessPromises = accesses.map(access => {
+    return AccessModel.findOne(access).exec();
+  })
+  Promise.all(findTypeAccessPromises)
+  .then(results => {
+    let accessToCreate = [];
+    for (let idx = 0; idx < results.length; idx++) {
+      if (!results[idx]) {
+        const row = new AccessModel(accesses[idx]);
+        accessToCreate.push(row.save());
+      }
+    }
+    return Promise.all(accessToCreate);
+  })
+  .catch(err => {
+    throw err;
+  })
+  .then(results => {
+    return callback(null, null);
+  })
+  .catch(err => {
+    return callback(err, null);
+  });
+}
 
 /*
  * Name of the default group for adding individuals is
@@ -354,6 +393,7 @@ const createAclForNewProperty = (requesterId, propertyId, propertyType) => {
 }
 
 module.exports = {
+  init: init,
   checkAccess: checkAccess,
   addAccessOfOneUser: addAccessOfOneUser,
   removeAccessOfOneUser: removeAccessOfOneUser,
@@ -361,5 +401,6 @@ module.exports = {
   removeAccessOfOneGroup: removeAccessOfOneGroup,
   listRolesOnProperties: listRolesOnProperties,
   listRolesOnPropertyTypes: listRolesOnPropertyTypes,
-  createAclForNewProperty: createAclForNewProperty
+  createAclForNewProperty: createAclForNewProperty,
+  AccessModelInternal: AccessModel
 }
