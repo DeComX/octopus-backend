@@ -92,6 +92,7 @@ const isPropertyBased = (propertyType) => {
     case PropertyType.USER:
     case PropertyType.ORGANIZATION:
     case PropertyType.SESSION:
+    case PropertyType.CHANNEL:
       return true;
     default:
       return false;
