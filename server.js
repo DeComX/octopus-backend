@@ -44,12 +44,19 @@ passport.deserializeUser(function(user, done) {
   done(null, user);
 });
 
-// const group = require('./acl/group');
-// group.init(config.group_admin, (err, value) => {
-//   if (err !== null) {
-//     return console.log(err);
-//   }
-// });
+const group = require('./acl/group');
+group.init(config.group_admin, (err, value) => {
+  if (err !== null) {
+    return console.log(err);
+  }
+});
+
+const access = require('./acl/property_access');
+access.init(config.group_admin, (err, value) => {
+  if (err !== null) {
+    return console.log(err);
+  }
+});
 
 // DB Config
 const options = {

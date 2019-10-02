@@ -16,8 +16,12 @@ const PropertyType = {
 
 const CreateRole = "create";
 
-const getCreatorGroup = (propertyType) => {
+const getCreatorGroupName = (propertyType) => {
   return `group_${propertyType}_creators`;
+}
+
+const getTypeAclGroupName = (propertyType, role) => {
+  return `group_${propertyType}_${role}`;
 }
 
 /*****************
@@ -85,12 +89,12 @@ const listPropertyTypes = () => {
 // the acl is role bases, whose property ID is empty.
 const isPropertyBased = (propertyType) => {
   switch (propertyType) {
-    case PropertyType.MEMBER:
+    case PropertyType.USER:
     case PropertyType.ORGANIZATION:
     case PropertyType.SESSION:
-      return false;
-    default:
       return true;
+    default:
+      return false;
   }
 }
 
@@ -135,7 +139,8 @@ const getAboveRoles = (propertyType, targetRole) => {
 
 module.exports = {
   CreateRole: CreateRole,
-  getCreatorGroup: getCreatorGroup,
+  getCreatorGroupName: getCreatorGroupName,
+  getTypeAclGroupName: getTypeAclGroupName,
   listPropertyTypes: listPropertyTypes,
   isPropertyBased: isPropertyBased,
   getRoles: getRoles,

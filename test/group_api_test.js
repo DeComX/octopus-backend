@@ -11,33 +11,27 @@ chai.use(chaiHttp);
 
 describe('To test initialize groups', () => {
   it('successfully initialized the system with all groups', (done) => {
-    chai.request(server)
-        .post('/api/v1/group/init')
-        .set('authorization', TestUtils.getToken("user1"))
-        .then(res => {
-          expect(res).to.have.status(200);
-          return GroupModule.GroupModelInternal.findOne({ name: 'GROUP_SYSTEM_ADMIN'}).exec();
-        })
-        .catch(err => {
-          throw err;
-        })
-        .then(result => {
-          result.name.should.be.eql('GROUP_SYSTEM_ADMIN');
-          return GroupModule.GroupModelInternal.findOne({ name: 'group_users_creators'}).exec();
-        })
-        .catch(err => {
-          throw err;
-        })
-        .then(result => {
-          result.name.should.be.eql('group_users_creators');
-          done();
-        })
-        .catch(err => {
-          expect(err).to.be.null;
-          done();
-        });
+    GroupModule.init("user1", (err, value) => {
+      expect(err).to.be.null;
+      GroupModule.GroupModelInternal.findOne({ name: 'GROUP_SYSTEM_ADMIN'}).exec()
+      .then(result => {
+        result.name.should.be.eql('GROUP_SYSTEM_ADMIN');
+        return GroupModule.GroupModelInternal.findOne({ name: 'group_user_creators'}).exec();
+      })
+      .catch(err => {
+        throw err;
+      })
+      .then(result => {
+        result.name.should.be.eql('group_user_creators');
+        done();
+      })
+      .catch(err => {
+        expect(err).to.be.null;
+        done();
+      });
+    });
   });
-  
+  /*
   it('failed to initialize twice.', (done) => {
     chai.request(server)
         .post('/api/v1/group/init')
@@ -60,4 +54,5 @@ describe('To test initialize groups', () => {
           done();
         });
   });
+  */
 });

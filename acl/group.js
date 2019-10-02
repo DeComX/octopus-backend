@@ -45,10 +45,22 @@ const init = (requesterId, callback) => {
     return callback(new Error('Missing system owner user ID.'), null);
   }
 
+  // The creator groups for all property types and new group.
   const groupCreatorGroups = [GROUP_GROUP_CREATORS].concat(
     ...AclConfig.listPropertyTypes().map(type => {
-      return AclConfig.getCreatorGroup(type);
+      return AclConfig.getCreatorGroupName(type);
   }));
+
+  // The acl groups for all property types.
+  const typeAclGroups = AclConfig.listPropertyTypes().flatMap(type => {
+    return AclConfig.getRoles(type).map(role => {
+      return AclConfig.getTypeAclGroupName(type, role);
+    });
+  });
+
+  // TODO: Add more predefined group to great.
+  const groupsToCreate = groupCreatorGroups.concat(...typeAclGroups);
+
   GroupModel.findOne({ name: GROUP_SYSTEM_ADMIN }).exec()
   .then(result => {
     if (result) {
@@ -65,28 +77,28 @@ const init = (requesterId, callback) => {
     throw err;
   })
   .then(result => {
-    return groupCreatorGroups.map(group => {
+    return Promise.all(groupsToCreate.map(group => {
       GroupModel.findOne({ name: group }).exec();
-    });
+    }));
   })
   .catch(err => {
     throw err;
   })
   .then(results => {
-  	const groupToCreate = [];
+  	const actualGroupsToCreate = [];
   	for (let i = 0; i < results.length; i++) {
   	  if (!results[i]) {
-  	    groupToCreate.push(groupCreatorGroups[i]);
+  	    actualGroupsToCreate.push(groupsToCreate[i]);
   	  }
   	}
-  	return groupToCreate.map(groupName => {
+  	return Promise.all(actualGroupsToCreate.map(groupName => {
   	  let group = new GroupModel({
         name: groupName,
         ownerIds: [requesterId],
         userIds: []
       })
       return group.save();
-  	});
+  	}));
   })
   .catch(err => {
   	throw err;

@@ -5,8 +5,8 @@ const server = require('../server');
 afterEach((done) => {
 	mongoose.connect("mongodb://localhost/decom");
 	mongoose.connection.once('open', () => {
-		mongoose.connection.dropCollection('groups', (err, result) => {
-			mongoose.connection.dropCollection('access_controls', (err, result) => {
+		mongoose.connection.dropCollection('group', (err, result) => {
+			mongoose.connection.dropCollection('access_control', (err, result) => {
 	        	done();
 	        });
 		});
