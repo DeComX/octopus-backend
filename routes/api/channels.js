@@ -24,7 +24,7 @@ router.post("/newchannel", [
 		return res.status(422).json({ error: errors.array() });
 	}
   Channel
-    .find({name: req.body.name, type: req.body.type})
+    .findOne({name: req.body.name, type: req.body.type})
     .then(channel => {
       if (channel) {
         res.status(400).json(
@@ -34,7 +34,8 @@ router.post("/newchannel", [
           name: req.body.name,
           type: req.body.type,
           link: req.body.link,
-          auth: req.body.auth
+          auth: req.body.auth,
+          updated_at: new Date()
         })
         .save()
         .then(saved => res.json({ok: true}))
