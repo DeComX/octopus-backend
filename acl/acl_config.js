@@ -101,8 +101,8 @@ const isPropertyBased = (propertyType) => {
 
 const getRoles = (propertyType) => {
   switch (propertyType) {
-    case PropertyType.MEMBER:
-      return Object.values(MemberRoles);
+    case PropertyType.USER:
+      return Object.values(UserRoles);
     case PropertyType.CAMPAIGN:
       return Object.values(CampaignRoles);
     default:
