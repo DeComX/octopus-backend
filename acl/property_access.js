@@ -18,7 +18,7 @@ const AccessModel = mongoose.model(collectionName, AccessSchema);
 const init = (requesterId, callback) => {
   const types = AclConfig.listPropertyTypes()
       .filter(type => AclConfig.isPropertyBased(type));
-  const accesses = types.flatMap(type => {
+  let accesses = types.flatMap(type => {
     return AclConfig.getRoles(type).map(role => {
       return {
         propertyType: type,
@@ -27,6 +27,20 @@ const init = (requesterId, callback) => {
       };
     });
   });
+  // Add pre-defined access.
+  accesses = accesses.concat(
+    ...Object.keys(AclConfig.PredefinedGroupAccess).flatMap(group => {
+      return Object.keys(AclConfig.PredefinedGroupAccess[group]).flatMap(property => {
+        return AclConfig.PredefinedGroupAccess[group][property].map(role => {
+          return {
+            propertyType: property,
+            group: group,
+            role: role,
+          }
+        });
+      });
+    })
+  );
   const findTypeAccessPromises = accesses.map(access => {
     return AccessModel.findOne(access).exec();
   })

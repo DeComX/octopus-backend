@@ -50,6 +50,104 @@ const StrictAboveRules = new Map([
   [StrictRoles.READ_METADATA, StrictRoles.READ_DETAIL],
 ]);
 
+/*********************************
+ * Predefined groups and access
+ *********************************/
+
+const PredefinedGroup = [
+  "GROUP_Growth",
+  "GROUP_BD_Team",
+  "GROUP_Event_Team",
+  "GROUP_Content_Team",
+  "GROUP_Marketing_Team",
+];
+
+const PredefinedGroupAccess = {
+  "GROUP_Growth": {
+    PropertyType.USER: [
+      StrictRoles.ADMIN,
+    ],
+    PropertyType.ORGANIZATION: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.SESSION: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.EVENT: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.CAMPAIGN: [
+      StrictRoles.READ_DETAIL,
+    ],
+  },
+  "GROUP_BD_Team": {
+    PropertyType.USER: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.ORGANIZATION: [
+      StrictRoles.ADMIN,
+    ],
+    PropertyType.SESSION: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.EVENT: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.CAMPAIGN: [
+      StrictRoles.READ_DETAIL,
+    ],
+  },
+  "GROUP_Event_Team": {
+    PropertyType.USER: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.ORGANIZATION: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.SESSION: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.EVENT: [
+      StrictRoles.ADMIN,
+    ],
+    PropertyType.CAMPAIGN: [
+      StrictRoles.READ_DETAIL,
+    ],
+  },
+  "GROUP_Content_Team": {
+    PropertyType.USER: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.ORGANIZATION: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.SESSION: [
+      StrictRoles.ADMIN,
+    ],
+    PropertyType.EVENT: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.CAMPAIGN: [
+      StrictRoles.READ_DETAIL,
+    ],
+  "GROUP_Marketing_Team": {
+    PropertyType.USER: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.ORGANIZATION: [
+      StrictRoles.READ_METADATA,
+    ],
+    PropertyType.SESSION: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.EVENT: [
+      StrictRoles.READ_DETAIL,
+    ],
+    PropertyType.CAMPAIGN: [
+      StrictRoles.ADMIN,
+    ],
+};
+
 /****************************************************/
 
 const listPropertyTypes = () => {

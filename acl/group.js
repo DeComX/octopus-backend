@@ -52,11 +52,14 @@ const init = (requesterId, callback) => {
     });
   });
 
+  const groupCreatorGroups = typeAclGroups.concat(
+    ...AclConfig.PredefinedGroup);
+
   GroupModel.findOne({ name: GROUP_SYSTEM_ADMIN }).exec()
   .then(result => {
     if (result) {
       console.log("Group GROUP_SYSTEM_ADMIN already exists, skipping...");
-      return;
+      return Promise.resolve({});
     }
     let group_system_admin = new GroupModel({
       name: GROUP_SYSTEM_ADMIN,
@@ -69,7 +72,7 @@ const init = (requesterId, callback) => {
     throw err;
   })
   .then(result => {
-    return Promise.all(typeAclGroups.map(group => {
+    return Promise.all(groupCreatorGroups.map(group => {
       GroupModel.findOne({ name: group }).exec();
     }));
   })
@@ -80,23 +83,16 @@ const init = (requesterId, callback) => {
   	const actualGroupsToCreate = [];
   	for (let i = 0; i < results.length; i++) {
   	  if (!results[i]) {
-  	    actualGroupsToCreate.push(typeAclGroups[i]);
+  	    actualGroupsToCreate.push(groupCreatorGroups[i]);
   	  }
-  	}9
+  	}
   	return Promise.all(actualGroupsToCreate.map(groupName => {
-      GroupModel.findOne({name: groupName})
-        .then(group => {
-          if (group) {
-            console.log("Group " + groupName + " already exists, skipping...");
-            return;
-          }
-          let newGroup = new GroupModel({
-            name: groupName,
-            ownerIds: [requesterId],
-            userIds: []
-          })
-          return newGroup.save();
-        })
+      let group = new GroupModel({
+        name: groupName,
+        ownerIds: [requesterId],
+        userIds: []
+      })
+      return group.save();
   	}));
   })
   .catch(err => {
