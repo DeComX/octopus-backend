@@ -3,22 +3,16 @@ const Event = require("../models/Event");
 const Organization = require("../models/Organization");
 const Session = require("../models/Session");
 const User = require("../models/User");
+const Channel = require("../models/Channel");
 
 const PropertyType = {
   CAMPAIGN: Campaign.collection.collectionName,
-  CHANNEL: "channels",
+  CHANNEL: Channel.collection.collectionName,
   EVENT: Event.collection.collectionName,
-  IMAGE: "images",
   USER: User.collection.collectionName,
   ORGANIZATION: Organization.collection.collectionName,
   SESSION: Session.collection.collectionName,
 };
-
-const CreateRole = "create";
-
-const getCreatorGroupName = (propertyType) => {
-  return `group_${propertyType}_creators`;
-}
 
 const getTypeAclGroupName = (propertyType, role) => {
   return `group_${propertyType}_${role}`;
@@ -28,55 +22,32 @@ const getTypeAclGroupName = (propertyType, role) => {
  * Default roles.
  *****************/
 const DefaultRoles = {
-  OWNER: "owner",
-  AMDIN: "admin",
-  READ_WRITE: "read_write",
-  READ: "read",
+  ADMIN: "admin", // create/delete/publish
+  READ_WRITE: "read_write", // read_write
+  READ: "read", // read only
 };
 
 const DefaultAboveRoles = new Map([
-  [DefaultRoles.OWNER, null],
-  [DefaultRoles.AMDIN, DefaultRoles.OWNER],
-  [DefaultRoles.READ_WRITE, DefaultRoles.AMDIN],
+  [DefaultRoles.ADMIN, null],
+  [DefaultRoles.READ_WRITE, DefaultRoles.ADMIN],
   [DefaultRoles.READ, DefaultRoles.READ_WRITE],
 ]);
 
 /*****************
- * User roles.
+ * Controlled roles.
  *****************/
-const UserRoles = {
-  OWNER: "owner",
-  AMDIN: "admin",
-  READ_WRITE: "read_write",
-  READ_DETAIL: "read_detail",
-  READ_METADATA: "read_metadata",
+const StrictRoles = {
+  ADMIN: "admin", // create/delete
+  READ_WRITE: "read_write", // read_write
+  READ_DETAIL: "read_detail", // read only
+  READ_METADATA: "read_metadata", // read meta only
 };
 
-const UserAboveRoles = new Map([
-  [UserRoles.OWNER, null],
-  [UserRoles.AMDIN, UserRoles.OWNER],
-  [UserRoles.READ_WRITE, UserRoles.AMDIN],
-  [UserRoles.READ_DETAIL, UserRoles.READ_WRITE],
-  [UserRoles.READ_METADATA, UserRoles.READ_DETAIL],
-]);
-
-/*****************
- * Campaign roles.
- *****************/
-const CampaignRoles = {
-  OWNER: "owner",
-  AMDIN: "admin",
-  READ_WRITE: "read_write",
-  READ: "read",
-  PUBLISH: "publish",
-};
-
-const CampaignAboveRoles = new Map([
-  [CampaignRoles.OWNER, null],
-  [CampaignRoles.AMDIN, CampaignRoles.OWNER],
-  [CampaignRoles.READ_WRITE, CampaignRoles.AMDIN],
-  [CampaignRoles.READ, CampaignRoles.READ_WRITE],
-  [CampaignRoles.PUBLISH, CampaignRoles.AMDIN],
+const StrictAboveRules = new Map([
+  [StrictRoles.ADMIN, null],
+  [StrictRoles.READ_WRITE, StrictRoles.ADMIN],
+  [StrictRoles.READ_DETAIL, StrictRoles.READ_WRITE],
+  [StrictRoles.READ_METADATA, StrictRoles.READ_DETAIL],
 ]);
 
 /****************************************************/
@@ -102,9 +73,9 @@ const isPropertyBased = (propertyType) => {
 const getRoles = (propertyType) => {
   switch (propertyType) {
     case PropertyType.USER:
-      return Object.values(UserRoles);
-    case PropertyType.CAMPAIGN:
-      return Object.values(CampaignRoles);
+      return Object.values(StrictRoles);
+    case PropertyType.ORGANIZATION:
+      return Object.values(StrictRoles);
     default:
       return Object.values(DefaultRoles);
   }
@@ -139,8 +110,6 @@ const getAboveRoles = (propertyType, targetRole) => {
 }
 
 module.exports = {
-  CreateRole: CreateRole,
-  getCreatorGroupName: getCreatorGroupName,
   getTypeAclGroupName: getTypeAclGroupName,
   listPropertyTypes: listPropertyTypes,
   isPropertyBased: isPropertyBased,

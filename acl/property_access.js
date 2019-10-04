@@ -68,24 +68,9 @@ const findPropertyCondition = (propertyId, propertyType) => {
   return { 'propertyId': propertyId };
 }
 
-const checkCreateAccess = (requesterId, propertyType) => {
-  return new Promise((resolve, reject) => {
-    GroupModule.isInGroup(requesterId, [AclConfig.getCreatorGroup(propertyType)], false)
-    .then(isAccessible => {
-      resolve({ isAccessible: isAccessible });
-    })
-    .catch(err => {
-      reject(err);
-    });
-  });
-}
-
 // Return Promise({ err: error, isAccessible: boolean })
 // accessRow is the AccessSet with given targetRole.
 const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) => {
-  if (targetRole === AclConfig.CreateRole) {
-    return checkCreateAccess(requesterId, propertyType);
-  }
   const aboveRolesList = TypeAndRole.getAboveRoles(propertyType, targetRole);
   const aboveRolesMap = aboveRoleList.reduce((map, role) => {
     map.set(role, true);
@@ -365,7 +350,10 @@ const listRolesOnPropertyTypes = (requesterId, propertyTypeArray, callback) => {
 }
 
 const createAclForNewProperty = (requesterId, propertyId, propertyType) => {
-  GroupModule.isInGroup(requesterId, AclConfig.getCreatorGroupName(propertyType), false)
+  GroupModule.isInGroup(
+    requesterId,
+    AclConfig.getTypeAclGroupName(propertyType, "admin"),
+    false)
   .then(isAccessible => {
     if (!isAccessible) {
       return Promise.reject(new Error("PERMISSION_DENIED"));

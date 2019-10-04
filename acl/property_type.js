@@ -3,24 +3,21 @@ const PropertyType = {
   CAMPAIGN: "campaign",
   CHANNEL: "channel",
   EVENT: "event",
-  IMAGE: "image",
-  MEMBER: "member",
+  USER: "user",
   ORGANIZATION: "organization",
   SESSION: "session",
 };
 
 const DefaultRoles = {
-  OWNER: "owner",
-  AMDIN: "admin",
+  ADMIN: "admin",
   READ: "read",
-  READWRITE: "readwrite",
+  READ_WRITE: "read_write",
 };
 
 const DefaultAdminRoles = new Map([
-  [DefaultRoles.OWNER, null],
-  [DefaultRoles.AMDIN, DefaultRoles.OWNER],
-  [DefaultRoles.READ, DefaultRoles.AMDIN],
-  [DefaultRoles.READWRITE, DefaultRoles.AMDIN],
+  [DefaultRoles.ADMIN, null],
+  [DefaultRoles.READ, DefaultRoles.ADMIN],
+  [DefaultRoles.READWRITE, DefaultRoles.ADMIN],
 ]);
 
 const listPropertyTypes = () => {
@@ -33,6 +30,7 @@ const isPropertyBased = (propertyType) => {
   switch (propertyType) {
   	case PropertyType.MEMBER:
   	case PropertyType.ORGANIZATION:
+    case PropertyType.CHANNEL:
   	  return false;
   	default:
   	  return true;

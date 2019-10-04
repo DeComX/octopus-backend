@@ -45,12 +45,6 @@ const init = (requesterId, callback) => {
     return callback(new Error('Missing system owner user ID.'), null);
   }
 
-  // The creator groups for all property types and new group.
-  const groupCreatorGroups = [GROUP_GROUP_CREATORS].concat(
-    ...AclConfig.listPropertyTypes().map(type => {
-      return AclConfig.getCreatorGroupName(type);
-  }));
-
   // The acl groups for all property types.
   const typeAclGroups = AclConfig.listPropertyTypes().flatMap(type => {
     return AclConfig.getRoles(type).map(role => {
@@ -58,13 +52,11 @@ const init = (requesterId, callback) => {
     });
   });
 
-  // TODO: Add more predefined group to great.
-  const groupsToCreate = groupCreatorGroups.concat(...typeAclGroups);
-
   GroupModel.findOne({ name: GROUP_SYSTEM_ADMIN }).exec()
   .then(result => {
     if (result) {
-      return callback(new Error(`${GROUP_SYSTEM_ADMIN} already exists.`), null);
+      console.log("Group GROUP_SYSTEM_ADMIN already exists, skipping...");
+      return;
     }
     let group_system_admin = new GroupModel({
       name: GROUP_SYSTEM_ADMIN,
@@ -77,7 +69,7 @@ const init = (requesterId, callback) => {
     throw err;
   })
   .then(result => {
-    return Promise.all(groupsToCreate.map(group => {
+    return Promise.all(typeAclGroups.map(group => {
       GroupModel.findOne({ name: group }).exec();
     }));
   })
@@ -88,16 +80,23 @@ const init = (requesterId, callback) => {
   	const actualGroupsToCreate = [];
   	for (let i = 0; i < results.length; i++) {
   	  if (!results[i]) {
-  	    actualGroupsToCreate.push(groupsToCreate[i]);
+  	    actualGroupsToCreate.push(typeAclGroups[i]);
   	  }
-  	}
+  	}9
   	return Promise.all(actualGroupsToCreate.map(groupName => {
-  	  let group = new GroupModel({
-        name: groupName,
-        ownerIds: [requesterId],
-        userIds: []
-      })
-      return group.save();
+      GroupModel.findOne({name: groupName})
+        .then(group => {
+          if (group) {
+            console.log("Group " + groupName + " already exists, skipping...");
+            return;
+          }
+          let newGroup = new GroupModel({
+            name: groupName,
+            ownerIds: [requesterId],
+            userIds: []
+          })
+          return newGroup.save();
+        })
   	}));
   })
   .catch(err => {
