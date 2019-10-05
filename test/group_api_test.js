@@ -16,13 +16,13 @@ describe('To test initialize groups', () => {
       GroupModule.GroupModelInternal.findOne({ name: 'GROUP_SYSTEM_ADMIN'}).exec()
       .then(result => {
         result.name.should.be.eql('GROUP_SYSTEM_ADMIN');
-        return GroupModule.GroupModelInternal.findOne({ name: 'group_user_creators'}).exec();
+        return GroupModule.GroupModelInternal.findOne({ name: 'group_user_admin'}).exec();
       })
       .catch(err => {
         throw err;
       })
       .then(result => {
-        result.name.should.be.eql('group_user_creators');
+        result.name.should.be.eql('group_user_admin');
         done();
       })
       .catch(err => {

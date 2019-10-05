@@ -63,23 +63,14 @@ const PredefinedGroup = [
 ];
 
 const PredefinedGroupAccess = {
-  "GROUP_Growth": {
-    PropertyType.USER: [
-      StrictRoles.ADMIN,
-    ],
-    PropertyType.ORGANIZATION: [
-      StrictRoles.READ_METADATA,
-    ],
-    PropertyType.SESSION: [
-      StrictRoles.READ_DETAIL,
-    ],
-    PropertyType.EVENT: [
-      StrictRoles.READ_DETAIL,
-    ],
-    PropertyType.CAMPAIGN: [
-      StrictRoles.READ_DETAIL,
-    ],
-  },
+  "GROUP_Growth": new Map([
+    [ PropertyType.USER, [StrictRoles.ADMIN] ], 
+    [ PropertyType.ORGANIZATION, [ StrictRoles.READ_METADATA, ] ],
+    [ PropertyType.SESSION, [ StrictRoles.READ_DETAIL ], ],
+    [ PropertyType.EVENT, [ StrictRoles.READ_DETAIL ], ],
+    [ PropertyType.CAMPAIGN, [ StrictRoles.READ_DETAIL ], ],
+  ]),
+  /*
   "GROUP_BD_Team": {
     PropertyType.USER: [
       StrictRoles.READ_METADATA,
@@ -146,6 +137,7 @@ const PredefinedGroupAccess = {
     PropertyType.CAMPAIGN: [
       StrictRoles.ADMIN,
     ],
+    */
 };
 
 /****************************************************/
@@ -214,4 +206,6 @@ module.exports = {
   getRoles: getRoles,
   getAboveRole: getAboveRole,
   getAboveRoles: getAboveRoles,
+  PredefinedGroup: PredefinedGroup,
+  PredefinedGroupAccess: PredefinedGroupAccess,
 }

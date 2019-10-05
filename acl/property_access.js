@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-const TypeAndRole = require('./acl_config');
 const GroupModule = require('./group');
 const AclConfig = require('./acl_config');
 
@@ -30,15 +29,17 @@ const init = (requesterId, callback) => {
   // Add pre-defined access.
   accesses = accesses.concat(
     ...Object.keys(AclConfig.PredefinedGroupAccess).flatMap(group => {
-      return Object.keys(AclConfig.PredefinedGroupAccess[group]).flatMap(property => {
-        return AclConfig.PredefinedGroupAccess[group][property].map(role => {
-          return {
+      const groupAccess = [];
+      for (let [property, roles] of AclConfig.PredefinedGroupAccess[group]) {
+        for (let role of roles) {
+          groupAccess.push({
             propertyType: property,
             group: group,
             role: role,
-          }
-        });
-      });
+          });
+        }
+      }
+      return groupAccess;
     })
   );
   const findTypeAccessPromises = accesses.map(access => {
@@ -76,7 +77,7 @@ const getDefaultGroupName = (propertyId, propertyType, role) => {
 
 
 const findPropertyCondition = (propertyId, propertyType) => {
-  if (TypeAndRole.isPropertyBased(propertyType)) {
+  if (AclConfig.isPropertyBased(propertyType)) {
     return { 'propertyType': propertyType };
   }
   return { 'propertyId': propertyId };
@@ -85,7 +86,7 @@ const findPropertyCondition = (propertyId, propertyType) => {
 // Return Promise({ err: error, isAccessible: boolean })
 // accessRow is the AccessSet with given targetRole.
 const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) => {
-  const aboveRolesList = TypeAndRole.getAboveRoles(propertyType, targetRole);
+  const aboveRolesList = AclConfig.getAboveRoles(propertyType, targetRole);
   const aboveRolesMap = aboveRoleList.reduce((map, role) => {
     map.set(role, true);
     return map;
@@ -131,7 +132,7 @@ const checkAccess = (userId, propertyId, propertyType, targetRole, callback) => 
 // targetRole is the role of candidate instead of requester.
 // Return Promise({ err: error })
 const mutateAccessOfOneUserHelper = (requesterId, candidateId, op, propertyId, propertyType, targetRole) => {
-  checkAccessHelper(requesterId, propertyId, propertyType, TypeAndRole.getAboveRole(targetRole))
+  checkAccessHelper(requesterId, propertyId, propertyType, AclConfig.getAboveRole(targetRole))
   .then(result => {
     if (result.err) {
     	return Promise.reject(err);
@@ -187,7 +188,7 @@ const removeAccessOfOneUser = (requesterId, candidateId, propertyId, propertyTyp
 // targetRole is the role of candidate instead of requester.
 // Return Promise({ err: error })
 const mutateAccessOfOneGroupHelper = (requesterId, groupName, op, propertyId, propertyType, targetRole) => {
-  checkAccessHelper(requesterId, propertyId, propertyType, TypeAndRole.getAboveRole(targetRole))
+  checkAccessHelper(requesterId, propertyId, propertyType, AclConfig.getAboveRole(targetRole))
   .then(result => {
     if (result.err) {
     	return Promise.reject(err);
@@ -250,7 +251,7 @@ const removeAccessOfOneGroup = (requesterId, groupName, propertyId, propertyType
 }
 
 const encodeProperty = (propertyId, propertyType) => {
-  return TypeAndRole.isPropertyBased(propertyType) ? propertyId : propertyType;
+  return AclConfig.isPropertyBased(propertyType) ? propertyId : propertyType;
 }
 
 //
