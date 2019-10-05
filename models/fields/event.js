@@ -74,7 +74,7 @@ const EventValidator = (data) => {
 };
 
 module.exports = {
-  publicFields: EventFields.
+  publicFields: EventFields,
   fields: EventFields,
   validator: EventValidator
 }
