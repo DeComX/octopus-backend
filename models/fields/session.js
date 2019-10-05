@@ -58,6 +58,7 @@ const SessionValidator = (data) => {
 };
 
 module.exports = {
+  publicFields: SessionFields,
   fields: SessionFields,
   validator: SessionValidator
 }

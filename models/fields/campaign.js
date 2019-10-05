@@ -71,6 +71,7 @@ const CampaignValidator = (data) => {
 };
 
 module.exports = {
+  publicFields: CompaignFields,
   fields: CompaignFields,
   validator: CampaignValidator
 }
