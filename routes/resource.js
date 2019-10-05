@@ -39,7 +39,7 @@ const postHandler = (model, processor) => (req, res) => {
   const userId = req.user.id;
   const propertyType = model.collection.collectionName;
   const propertyId = payload._id;
-  const role = !payload._id ? AclConfig.CreateRole : "read_write";
+  const role = !payload._id ? "admin" : "read_write";
   ACL.checkAccess(userId, propertyId, propertyType, role, (isAccessible) => {
     if (!isAccessible) {
       return res.status(401).json({err: 'No permission to update.'});
@@ -78,6 +78,21 @@ const postHandler = (model, processor) => (req, res) => {
   })
 };
 
+const constructQuery = (req_query) => {
+  let query = {$and: []};
+  query.$and = query.$and.concat(
+    (req_query.regexFilters || []).map(regexFilter => {
+      const parsed = JSON.parse(regexFilter);
+      return {[parsed.key]: new RegExp(parsed.value, 'i')}
+    })
+  );
+  const parsedFilters = (req_query.filters || []).map(filter => JSON.parse(filter));
+  query.$and = query.$and.concat(parsedFilters);
+  if (query.$and.length === 0) {
+    query = {};
+  }
+}
+
 const defaultPaginationOptions = {
   page: 1,
   limit: 20,
@@ -90,24 +105,11 @@ const defaultPaginationOptions = {
 //   options: {} # for pagination options
 // }
 const paginationGet = (model, processor, req, res) => {
-  let query = {$and: []};
   let options = JSON.parse(req.query.options || "{}");
   options = Object.assign(defaultPaginationOptions, options);
 
-  query.$and = query.$and.concat(
-    (req.query.regexFilters || []).map(regexFilter => {
-      const parsed = JSON.parse(regexFilter);
-      return {[parsed.key]: new RegExp(parsed.value, 'i')}
-    })
-  );
-  const parsedFilters = (req.query.filters || []).map(filter => JSON.parse(filter));
-  query.$and = query.$and.concat(parsedFilters);
-
-  if (query.$and.length === 0) {
-    query = {};
-  }
   model
-    .paginate(query, options)
+    .paginate(constructQuery(req.query), options)
     .then((result) => {
       processor.postProcess(result, res, paginated=true);
     })
@@ -125,23 +127,8 @@ const defaultOptions = {
 const noPaginationGet = (model, processor, req, res) => {
   let options = JSON.parse(req.query.options || "{}");
   options = Object.assign(defaultOptions, options);
-
-  let query = {$and: []};
-  query.$and = query.$and.concat(
-    (req.query.regexFilters || []).map(regexFilter => {
-      const parsed = JSON.parse(regexFilter);
-      return {[parsed.key]: new RegExp(parsed.value, 'i')}
-    })
-  );
-  query.$and = query.$and.concat(
-    (req.query.filters || []).map(filter => JSON.parse(filter))
-  );
-  if (query.$and.length === 0) {
-    query = {};
-  }
-
   model
-    .find(query)
+    .find(constructQuery(req.query))
     .sort(options.sort)
     .limit(options.limit)
     .then((data) => {
@@ -165,7 +152,7 @@ const deleteHandler = (model) => (req, res) => {
   const userId = req.user.id;
   const propertyType = model.collection.collectionName;
   const propertyId = req.query._id;
-  ACL.checkAccess(userId, propertyId, propertyType, "read_write", (isAccessible) => {
+  ACL.checkAccess(userId, propertyId, propertyType, "owner", (isAccessible) => {
     if (!isAccessible) {
       return res.status(401).json({err: 'No permission to update.'});
     }

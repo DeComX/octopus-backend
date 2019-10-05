@@ -72,4 +72,20 @@ router.post("/updatechannel", [
     });
 });
 
+router.post("/deletechannel", [
+    check('_id').not().isEmpty()
+  ], (req, res) => {
+  const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		return res.status(422).json({ error: errors.array() });
+	}
+  Channel
+    .findByIdAndRemove(req.body._id)
+    .then(data => {
+      res.json({ok: true, data: data});
+    }).catch((err) => {
+      res.status(400).json({"errReason": err});
+    });
+});
+
 module.exports = router;
