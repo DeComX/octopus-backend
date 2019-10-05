@@ -251,7 +251,8 @@ const removeAccessOfOneGroup = (requesterId, groupName, propertyId, propertyType
 }
 
 const encodeProperty = (propertyId, propertyType) => {
-  return AclConfig.isPropertyBased(propertyType) ? propertyId : propertyType;
+
+  return AclConfig.isPropertyBased(propertyType) ? propertyType : propertyId;
 }
 
 //
@@ -268,19 +269,22 @@ const listRolesOnPropertiesHelper = (requesterId, propertyConditionArray) => {
     GroupModule.listMyGroups(requesterId, (err, result) => {
       if (err) {
         reject(err);
-      }
-      if (!result || !result.access || !result.access.length) {
+      } else if (!result || !result.access || !result.access.length) {
         resolve({ accessGroups: [] });
+      } else {
+        resolve({ accessGroups: result.access });
       }
-      resolve({ accessGroups: result.access });
     });
   });
-  listMyGroupsPromise
+  return listMyGroupsPromise
   .then(result => {
     const groupConditionArray = result.accessGroups.map(group => {
-      return { 'name': group };
+      return { 'group': group };
     });
-    const condition = {
+    if (groupConditionArray.length == 0) {
+      return Promise.resolve([]);
+    }
+    let condition = {
       $and: [
         { $or: propertyConditionArray },
         { $or: groupConditionArray }
@@ -293,7 +297,7 @@ const listRolesOnPropertiesHelper = (requesterId, propertyConditionArray) => {
   })
   .then(rows => {
   	const propertyMap = new Map();
-    for (row of rows) {
+    for (let row of rows) {
       const idf = encodeProperty(row.propertyId, row.propertyType);
       if (!propertyMap.has(idf)) {
         propertyMap.set(idf, {
@@ -355,7 +359,7 @@ const listRolesOnPropertyTypes = (requesterId, propertyTypeArray, callback) => {
   const propertyConditionArray = propertyTypeArray.map(type => {
     return { 'propertyType': type };
   });
-  listRolesOnPropertiesHelper(requesterId, propertyConditionArray)
+  return listRolesOnPropertiesHelper(requesterId, propertyConditionArray)
   .then(result => {
     return callback(null, result);
   })

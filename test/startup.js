@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const server = require('../server');
 
 // Clean up test database before running each test.
+/*
 afterEach((done) => {
 	mongoose.connect("mongodb://localhost/decom");
 	mongoose.connection.once('open', () => {
@@ -15,3 +16,4 @@ afterEach((done) => {
 		done();
 	});
 });
+*/

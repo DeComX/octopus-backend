@@ -4,10 +4,12 @@ const chaiHttp = require('chai-http');
 const server = require('../server');
 const TestUtils = require('./test_utils');
 const AccessModel = require('../acl/property_access');
+const GroupModel = require('../acl/group');
 
 const expect = chai.expect;
 const should = chai.should();
 chai.use(chaiHttp);
+
 
 describe('To test initialize AccessModel', () => {
   it('successfully initialized the system with access rows or users', (done) => {
@@ -27,5 +29,21 @@ describe('To test initialize AccessModel', () => {
         done();
       });
     });
+  });
+});
+
+describe('To test listRolesOnPropertyTypes()', () => {
+
+  it('successfully listed access of users', (done) => {
+    chai.request(server)
+        .post('/api/v1/acl/listRolesOnPropertyTypes')
+        .set("authorization", TestUtils.getToken("admin1"))
+        .send({propertyTypeArray: ["user"]})
+        .end((err, res) => {
+          res.should.have.status(200);
+          expect(res.body).to.have.property('access');
+          res.body["access"][0]["propertyType"].should.be.eql("user");
+          done();
+        });
   });
 });

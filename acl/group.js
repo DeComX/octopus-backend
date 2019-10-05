@@ -91,7 +91,7 @@ const init = (requesterId, callback) => {
         name: groupName,
         ownerIds: [requesterId],
         userIds: []
-      })
+      });
       return group.save();
   	}));
   })
@@ -239,49 +239,26 @@ const updateGroup = (requesterId, groupName, update, callback) => {
   });
 }
 
-// callback: (error, {own: [groups], access: [groups]} )
-// Access groups is superset of own groups.
 const listMyGroups = (requesterId, callback) => {
-  let ownGroups = [];
-  let accessGroups = [];
-
-  GroupModel.find({ ownerIds: requesterId }).exec()
-  .then(queriedOwnGroups => {
-    ownGroups = queriedOwnGroups || [];
-    return GroupModel.find({
-       $and: [{
-         userIds: requesterId
-       }, {
-         ownerIds: { "$ne": requesterId }
-       }]
-     }).exec();
-  })
-  .catch(err => {
-    throw err;
-  })
-  .then(groups => {
-    accessGroups = groups || [];
-    let userIds = new Set([]);
-    for (const group of ownGroups.concat(accessGroups)) {
-      for (const userId of group.ownerIds.concat(group.userIds || [])) {
-        userIds.add(userId);
-      }
+  Promise.all([
+  	GroupModel.find({ ownerIds: { $elemMatch: { $eq: requesterId } } }).exec(),
+  	GroupModel.find({ userIds: { $elemMatch: { $eq: requesterId } } }).exec()
+  ])
+  .then(result => {
+  	ownGroups = result[0].map(group => group.name);
+  	memberGroups = result[1].map(group => group.name);
+    const dedupGroups = new Map();
+    for (let group of ownGroups) {
+      dedupGroups.set(group, true);
     }
-    return UserModel.where('_id').in(Array.from(userIds)).exec();
+    for (let group of memberGroups) {
+      dedupGroups.set(group.name, true);
+    }
+    accessGroups = Array.from(dedupGroups.keys());
+    return callback(null, { own: ownGroups, access: accessGroups});
   })
   .catch(err => {
     return callback(err, null);
-  })
-  .then(queriedUsers => {
-    let users = queriedUsers.reduce((map, user) => {
-      map[user._id] = user;
-      return map;
-    }, {});
-    return callback(null, {
-      own: ownGroups,
-      access: accessGroups,
-      users: users
-    });
   })
 }
 

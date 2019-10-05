@@ -9,6 +9,7 @@ const expect = chai.expect;
 const should = chai.should();
 chai.use(chaiHttp);
 
+/*
 describe('To test initialize groups', () => {
   it('successfully initialized the system with all groups', (done) => {
     GroupModule.init("user1", (err, value) => {
@@ -31,7 +32,7 @@ describe('To test initialize groups', () => {
       });
     });
   });
-  /*
+  
   it('failed to initialize twice.', (done) => {
     chai.request(server)
         .post('/api/v1/group/init')
@@ -54,5 +55,5 @@ describe('To test initialize groups', () => {
           done();
         });
   });
-  */
 });
+  */
