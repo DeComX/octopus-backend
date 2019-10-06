@@ -138,7 +138,7 @@ const getAboveRoles = (propertyType, targetRole) => {
   const aboveRoles = [];
   let adminRoleMap = getAllAboveRoles(propertyType);
   let role = targetRole;
-  while (adminRoleMap.has(role)) {
+  while (role && adminRoleMap.has(role)) {
     aboveRoles.push(role);
     role = adminRoleMap.get(role);
   }

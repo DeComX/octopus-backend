@@ -87,7 +87,7 @@ const findPropertyCondition = (propertyId, propertyType) => {
 // accessRow is the AccessSet with given targetRole.
 const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) => {
   const aboveRolesList = AclConfig.getAboveRoles(propertyType, targetRole);
-  const aboveRolesMap = aboveRoleList.reduce((map, role) => {
+  const aboveRolesMap = aboveRolesList.reduce((map, role) => {
     map.set(role, true);
     return map;
   }, new Map());
@@ -100,7 +100,7 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
         });
       }
       const accessibleRows = accessRows.filter(row => aboveRolesMap.has(row));
-      if (!accessibleRows || !accessibleRows.length) {
+      if (!accessibleRows || accessibleRows.length == 0) {
         resolve({ isAccessible: false });
       }
       const accessibleGroups = new Map();
