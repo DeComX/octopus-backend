@@ -58,8 +58,18 @@ router.post('/updateGroup', [
 });
 
 // Return {own: [groups], access: [groups]}
-router.get('/listGroups', function(req, res) {
+router.get('/listGroupNames', function(req, res) {
 	GroupModule.listMyGroups(req.user.id, (err, value) => {
+	  if (err !== null) {
+	    return res.status(500).json({error: err});
+	  }
+	  return res.json(value);
+	});
+});
+
+// Return {own: [groups], access: [groups], users: [users_in_group]}
+router.get('/listGroupDetails', function(req, res) {
+	GroupModule.listMyGroupDetails(req.user.id, (err, value) => {
 	  if (err !== null) {
 	    return res.status(500).json({error: err});
 	  }

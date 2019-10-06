@@ -262,6 +262,39 @@ const listMyGroups = (requesterId, callback) => {
   })
 }
 
+// callback: (error, {own: [groups], access: [groups], users: [users_in_groups]} )
+const listMyGroupDetails = (requesterId, callback) => {
+  Promise.all([
+    GroupModel.find({ ownerIds: { $elemMatch: { $eq: requesterId } } }).exec(),
+    GroupModel.find({ userIds: { $elemMatch: { $eq: requesterId } } }).exec()
+  ])
+  .then(result => {
+    ownGroups = result[0];
+    memberGroups = result[1];
+    let userIds = new Set([]);
+    for (const group of ownGroups.concat(memberGroups)) {
+      for (const userId of group.ownerIds.concat(group.userIds || [])) {
+        userIds.add(userId);
+      }
+    }
+    return UserModel.where('_id').in(Array.from(userIds)).exec();
+  })
+  .catch(err => {
+    return callback(err, null);
+  })
+  .then(queriedUsers => {
+    let users = queriedUsers.reduce((map, user) => {
+      map[user._id] = user;
+      return map;
+    }, {});
+    return callback(null, {
+      own: ownGroups,
+      access: memberGroups,
+      users: users
+    });
+  })
+}
+
 // Do not expose this function through routes.
 // groupArray: [{name: String, ownerId: String}]
 const createGroupsInternal = (groupArray) => {
@@ -284,6 +317,7 @@ module.exports = {
   isExist: isExist,
   updateGroup: updateGroup,
   listMyGroups: listMyGroups,
+  listMyGroupDetails: listMyGroupDetails,
   createGroupsInternal: createGroupsInternal,
   GroupModelInternal: GroupModel,
 }
