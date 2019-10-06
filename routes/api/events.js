@@ -18,19 +18,16 @@ const preProcess = (fields, payload, files) => {
   return payload;
 };
 
-const postProcess = (data, res, paginated=false) => {
+const postProcess = (data, paginated=false) => {
   if (paginated) {
-    utils.fillEvents(data.docs).then(filled => {
+    return utils.fillEvents(data.docs).then(filled => {
       data.docs = filled;
-      return res.json(data);
+      return Promise.resolve(data);
     });
   } else {
-    const promise = Array.isArray(data)
+    return Array.isArray(data)
       ? utils.fillEvents(data)
       : utils.fillEvent(data);
-    promise.then(filled => {
-      return res.json(filled)
-    });
   }
 };
 

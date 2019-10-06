@@ -6,19 +6,16 @@ const resource = require('../resource');
 const defaultProcessor = require('../processor');
 const utils = require("../../utils/utils")
 
-const postProcess = (data, res, paginated=false) => {
+const postProcess = (data, paginated=false) => {
   if (paginated) {
-    utils.fillSessions(data.docs).then(filled => {
+    return utils.fillSessions(data.docs).then(filled => {
       data.docs = filled;
-      return res.json(data);
+      return Promise.resolve(data);
     });
   } else {
-    const promise = Array.isArray(data)
+    return Array.isArray(data)
       ? utils.fillSessions(data)
       : utils.fillSession(data);
-    promise.then(filled => {
-      return res.json(filled)
-    });
   }
 };
 

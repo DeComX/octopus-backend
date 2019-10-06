@@ -1,46 +1,32 @@
 const User = require("../models/User");
 const Session = require("../models/Session");
 const Event = require("../models/Event");
+const Campaign = require("../models/Campaign");
 
 const userPublicFields = require("../models/fields/user").publicFields;
 
 // return a promise
 const fillSession = (session) => {
-  let sessionObj = session;
-  try {
-    sessionObj = session.toObject();
-  } catch(e) {
-    sessionObj = session;
-  }
-
-  return new Promise(
-    (resolve, reject) => {
-      User.find(
-        {_id: session.speakers},
-        Object.keys(userPublicFields || {}).join(' ')
-      ).then(users => {
-        sessionObj.speakers = user;
-        resolve(sessionObj);
-      })
-      .catch(err => {
-        sessionObj.speakers = [];
-        resolve(sessionObj);
-      });
-    }
-  );
+  const sessionObj = (session instanceof Session)
+    ? session.toObject()
+    : session;
+  return User.find(
+    {_id: session.speakers},
+    Object.keys(userPublicFields || {}).join(' ')
+  ).then(users => {
+    sessionObj.speakers = users;
+    return Promise.resolve(sessionObj);
+  })
+  .catch(err => {
+    sessionObj.speakers = [];
+    return Promise.resolve(sessionObj);
+  });
 }
 
 const fillSessions = (sessions) => {
   const promises = sessions
     .map(session => fillSession(session));
-  return new Promise(
-    (resolve, reject) => {
-      Promise.all(promises)
-      .then((filled) => {
-        resolve(filled);
-      })
-    }
-  );
+  return Promise.all(promises);
 }
 
 const fillEvent = (event) => {

@@ -412,7 +412,7 @@ const listRolesOnPropertyTypes = (requesterId, propertyTypeArray, callback) => {
 const createAclForNewProperty = (requesterId, propertyId, propertyType) => {
   GroupModule.isInGroup(
     requesterId,
-    AclConfig.getTypeAclGroupName(propertyType, "admin"),
+    [AclConfig.getTypeAclGroupName(propertyType, "admin")],
     false)
   .then(isAccessible => {
     if (!isAccessible) {

@@ -4,8 +4,8 @@ const preProcess = (fields, payload, files) => {
   return result;
 };
 
-const postProcess = (data, res) => {
-  return res.json(data);
+const postProcess = (data) => {
+  return Promise.resolve(data);
 };
 
 module.exports = {

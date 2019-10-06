@@ -12,14 +12,16 @@ const doInsert = (model, processor, update, userId, res) => {
   }
   new model(update).save()
     .then((data) => {
-      processor.postProcess(data, res)
-      return ACL.createAclForNewProperty(userId, data._id, model.collection.collectionName);
+      return Promise.all([
+        ACL.createAclForNewProperty(userId, data._id, model.collection.collectionName),
+        processor.postProcess(data)
+      ]);
     })
+    .catch(err => {throw err;})
+    .then(result => res.json(result[1]))
     .catch(err => {
-      throw err;
-    })
-    .then(result => res.status(200).json({}))
-    .catch((err) => res.status(400).json({"errReason": err}));
+      res.status(400).json({"errReason": err})
+    });
 }
 
 const doUpdate = (model, processor, update, res) => {
@@ -27,7 +29,7 @@ const doUpdate = (model, processor, update, res) => {
       update._id,
       update,
       {new: true})
-    .then((data) => processor.postProcess(data, res))
+    .then((data) => processor.postProcess(data))
     .catch((err) => res.status(400).json({"errReason": err}));
 }
 
@@ -115,11 +117,16 @@ const paginationGet = (model, processor, req, res) => {
   model
     .paginate(constructQuery(req.query), options)
     .then((result) => {
-      processor.postProcess(result, res, paginated=true);
+      processor.postProcess(result, paginated=true).then(
+        processed => {
+          res.json(processed)
+        }
+      );
     })
     .catch((err) => {
+      console.log(err);
       res.status(400).json({"errReason": err});
-    });
+    })
 };
 
 const defaultOptions = {
@@ -137,12 +144,15 @@ const noPaginationGet = (model, processor, req, res, select) => {
   if (req.query.select) {
     query = query.select(req.query.select);
   }
-  query.then((data) => {
-    processor.postProcess(data || [], res)
-  })
-  .catch((err) => {
-    res.status(400).json({"errReason": err});
-  });
+  query
+    .then((data) => {
+      return processor.postProcess(data || [])
+    })
+    .catch(err => {throw err;})
+    .then(processed => res.json(processed))
+    .catch((err) => {
+      res.status(400).json({"errReason": err});
+    });
 };
 
 const getHandler = (model, processor) => (req, res) => {
