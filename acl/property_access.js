@@ -262,8 +262,9 @@ const removeAccessOfOneGroup = (requesterId, groupName, propertyId, propertyType
 }
 
 const encodeProperty = (propertyId, propertyType) => {
-
-  return AclConfig.isPropertyBased(propertyType) ? propertyType : propertyId;
+  return (AclConfig.isPropertyBased(propertyType) || !propertyId)
+    ? propertyType
+    : propertyId;
 }
 
 //

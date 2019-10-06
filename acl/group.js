@@ -242,7 +242,7 @@ const updateGroup = (requesterId, groupName, update, callback) => {
 const listMyGroups = (requesterId, callback) => {
   Promise.all([
   	GroupModel.find({ ownerIds: { $elemMatch: { $eq: requesterId } } }).exec(),
-  	GroupModel.find({ userIds: { $elemMatch: { $eq: requesterId } } }).exec()
+    GroupModel.find({ userIds: { $elemMatch: { $eq: requesterId } } }).exec()
   ])
   .then(result => {
   	ownGroups = result[0].map(group => group.name);
@@ -266,7 +266,10 @@ const listMyGroups = (requesterId, callback) => {
 const listMyGroupDetails = (requesterId, callback) => {
   Promise.all([
     GroupModel.find({ ownerIds: { $elemMatch: { $eq: requesterId } } }).exec(),
-    GroupModel.find({ userIds: { $elemMatch: { $eq: requesterId } } }).exec()
+    GroupModel.find({
+      userIds: { $elemMatch: { $eq: requesterId }, },
+      ownerIds: { $elemMatch: { $neq: requesterId } }
+    }).exec()
   ])
   .then(result => {
     ownGroups = result[0];
