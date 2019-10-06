@@ -322,12 +322,29 @@ const listRolesOnPropertiesHelper = (requesterId, propertyConditionArray) => {
     const accessPropertyArray = Array.from(propertyMap.values()).filter(ap => {
       return ap.roles && ap.roles.length > 0;
     });
+    for (let accessProperty of accessPropertyArray) {
+      accessProperty.role = getTopRole(accessProperty.propertyType, accessProperty.roles);
+      delete accessProperty.roles
+    }
     return Promise.resolve({ access: accessPropertyArray });
   })
   .catch(err => {
     return Promise.reject(err);
   });
 }
+
+// Input an array of roles. Output the highest role.
+const getTopRole = (type, roles) => {
+  if (roles.length == 0) {
+    return null;
+  }
+  for (let role of AclConfig.getRoles(type)) {
+    if (roles.indexOf(role) != -1) {
+      return role;
+    }
+  }
+  return roles[0];
+};
 
 // propertyArray: [{propertyId: String, propertyType: String}, ...]
 // Returns: callback(err, {
