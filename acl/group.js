@@ -241,8 +241,8 @@ const updateGroup = (requesterId, groupName, update, callback) => {
 
 const listMyGroups = (requesterId, callback) => {
   Promise.all([
-  	GroupModel.find({ ownerIds: { $elemMatch: { $eq: requesterId } } }).exec(),
-    GroupModel.find({ userIds: { $elemMatch: { $eq: requesterId } } }).exec()
+  	GroupModel.find({ ownerIds: requesterId }).exec(),
+    GroupModel.find({ userIds: requesterId }).exec()
   ])
   .then(result => {
   	ownGroups = result[0].map(group => group.name);
@@ -252,7 +252,7 @@ const listMyGroups = (requesterId, callback) => {
       dedupGroups.set(group, true);
     }
     for (let group of memberGroups) {
-      dedupGroups.set(group.name, true);
+      dedupGroups.set(group, true);
     }
     accessGroups = Array.from(dedupGroups.keys());
     return callback(null, { own: ownGroups, access: accessGroups});
@@ -265,10 +265,10 @@ const listMyGroups = (requesterId, callback) => {
 // callback: (error, {own: [groups], access: [groups], users: [users_in_groups]} )
 const listMyGroupDetails = (requesterId, callback) => {
   Promise.all([
-    GroupModel.find({ ownerIds: { $elemMatch: { $eq: requesterId } } }).exec(),
+    GroupModel.find({ ownerIds: requesterId }).exec(),
     GroupModel.find({
-      userIds: { $elemMatch: { $eq: requesterId }, },
-      ownerIds: { $elemMatch: { $neq: requesterId } }
+      userIds: requesterId,
+      ownerIds: { $ne: requesterId }
     }).exec()
   ])
   .then(result => {
@@ -282,9 +282,6 @@ const listMyGroupDetails = (requesterId, callback) => {
     }
     return UserModel.where('_id').in(Array.from(userIds)).exec();
   })
-  .catch(err => {
-    return callback(err, null);
-  })
   .then(queriedUsers => {
     let users = queriedUsers.reduce((map, user) => {
       map[user._id] = user;
@@ -295,6 +292,10 @@ const listMyGroupDetails = (requesterId, callback) => {
       access: memberGroups,
       users: users
     });
+  })
+  .catch(err => {
+    console.log(err);
+    return callback(err, null);
   })
 }
 

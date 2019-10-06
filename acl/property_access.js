@@ -4,7 +4,6 @@ const GroupModule = require('./group');
 const AclConfig = require('./acl_config');
 const User = require("../models/User");
 
-
 const collectionName = 'access_control';
 const AccessSchema = new Schema({
   propertyId: String,
@@ -374,14 +373,18 @@ const listRolesOnProperties = (requesterId, propertyArray, callback) => {
       return findPropertyCondition(property.propertyId, property.propertyType);
     }
   }).filter(condition => condition !== undefined);
-  listRolesOnPropertiesHelper(requesterId, propertyConditionArray)
-  .then(result => {
-    result.access = result.access.concat(access);
-    return callback(null, result);
-  })
-  .catch(err => {
-    return callback(err, null);
-  });
+  if (propertyConditionArray.length === 0) {
+    return callback(null, {access: access});
+  } else {
+    listRolesOnPropertiesHelper(requesterId, propertyConditionArray)
+    .then(result => {
+      result.access = result.access.concat(access);
+      return callback(null, result);
+    })
+    .catch(err => {
+      return callback(err, null);
+    });
+  }
 }
 
 // propertyTypeArray: [type]
