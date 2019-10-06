@@ -314,7 +314,7 @@ const createGroupsInternal = (groupArray) => {
 module.exports = {
   // Init should only be caught once when bootstrapping the system.
   init: init,
-  isInGroup, isInGroup,
+  isInGroup: isInGroup,
   createGroup: createGroup,
   getGroup: getGroup,
   isExist: isExist,

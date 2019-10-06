@@ -64,7 +64,7 @@ const PredefinedGroup = [
 
 const PredefinedGroupAccess = {
   "GROUP_Growth_Team": new Map([
-    [ PropertyType.USER, [StrictRoles.ADMIN] ], 
+    [ PropertyType.USER, [StrictRoles.ADMIN] ],
     [ PropertyType.ORGANIZATION, [ StrictRoles.READ_METADATA ] ],
     [ PropertyType.SESSION, [ StrictRoles.READ_DETAIL ], ],
     [ PropertyType.EVENT, [ StrictRoles.READ_DETAIL ], ],
@@ -146,6 +146,8 @@ const getAboveRoles = (propertyType, targetRole) => {
 }
 
 module.exports = {
+  PropertyType: PropertyType,
+  StrictRoles: StrictRoles,
   getTypeAclGroupName: getTypeAclGroupName,
   listPropertyTypes: listPropertyTypes,
   isPropertyBased: isPropertyBased,

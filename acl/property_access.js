@@ -360,11 +360,23 @@ const listRolesOnProperties = (requesterId, propertyArray, callback) => {
   if (!propertyArray || !propertyArray.length) {
     return Promise.resolve({ access: [] });
   }
+  let access = [];
   const propertyConditionArray = propertyArray.map(property => {
-    return findPropertyCondition(property.propertyId, property.propertyType);
-  });
+    if (property.propertyType === AclConfig.PropertyType.USER
+        && property.propertyId === requesterId) {
+      access.push({
+        propertyId: property.propertyId,
+        propertyType: property.propertyType,
+        role: AclConfig.StrictRoles.ADMIN
+      });
+      return undefined;
+    } else {
+      return findPropertyCondition(property.propertyId, property.propertyType);
+    }
+  }).filter(condition => condition !== undefined);
   listRolesOnPropertiesHelper(requesterId, propertyConditionArray)
   .then(result => {
+    result.access = result.access.concat(access);
     return callback(null, result);
   })
   .catch(err => {
