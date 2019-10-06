@@ -38,11 +38,12 @@ describe('To test listRolesOnPropertyTypes()', () => {
     chai.request(server)
         .post('/api/v1/acl/listRolesOnPropertyTypes')
         .set("authorization", TestUtils.getToken("admin1"))
-        .send({propertyTypeArray: ["user"]})
+        .send({propertyTypeArray: ["user", "organization"]})
         .end((err, res) => {
           res.should.have.status(200);
           expect(res.body).to.have.property('access');
           res.body["access"][0]["propertyType"].should.be.eql("user");
+          res.body["access"][1]["propertyType"].should.be.eql("organization");
           done();
         });
   });

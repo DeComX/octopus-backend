@@ -121,25 +121,11 @@ const isPropertyBased = (propertyType) => {
 }
 
 const getRoles = (propertyType) => {
-  switch (propertyType) {
-    case PropertyType.USER:
-      return Object.values(StrictRoles);
-    case PropertyType.ORGANIZATION:
-      return Object.values(StrictRoles);
-    default:
-      return Object.values(DefaultRoles);
-  }
+  return Object.values(StrictRoles);
 }
 
 const getAllAboveRoles = (propertyType) => {
-  switch (propertyType) {
-    case PropertyType.user:
-      return UserAboveRoles;
-    case PropertyType.CAMPAIGN:
-      return CampaignAboveRoles;
-    default:
-      return DefaultAboveRoles;
-  }
+  return StrictAboveRules;
 }
 
 const getAboveRole = (propertyType, role) => {
