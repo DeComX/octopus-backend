@@ -91,6 +91,7 @@ const constructQuery = (req_query) => {
   if (query.$and.length === 0) {
     query = {};
   }
+  return query;
 }
 
 const defaultPaginationOptions = {
@@ -137,11 +138,11 @@ const noPaginationGet = (model, processor, req, res, select) => {
     query = query.select(req.query.select);
   }
   query.then((data) => {
-      processor.postProcess(data || [], res)
-    })
-    .catch((err) => {
-      res.status(400).json({"errReason": err});
-    });
+    processor.postProcess(data || [], res)
+  })
+  .catch((err) => {
+    res.status(400).json({"errReason": err});
+  });
 };
 
 const getHandler = (model, processor) => (req, res) => {
