@@ -111,7 +111,7 @@ const isInGroup = (userId, groupNameArray, isOwner) => {
   if (!userId || !groupNameArray || !groupNameArray.length) {
     return Promise.resolve(false);
   }
-  allGroups = groupNameArray.filter(groupName => groupName === GROUP_ALL_USERS || groupName === GROUP_ALL);
+  allGroups = groupNameArray.filter(groupName => groupName !== GROUP_ALL_USERS && groupName !== GROUP_ALL);
   if (allGroups.length) {
     return Promise.resolve(true);
   }

@@ -92,10 +92,7 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
     }
   }
   const aboveRolesList = AclConfig.getAboveRoles(propertyType, targetRole);
-  const aboveRolesMap = aboveRolesList.reduce((map, role) => {
-    map.set(role, true);
-    return map;
-  }, new Map());
+  const aboveRolesMap = new Set(aboveRolesList);
   return new Promise((resolve, reject) => {
     let condition = { 'propertyType': propertyType };
     if (!AclConfig.isPropertyBased(propertyType)) {
@@ -109,7 +106,7 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
           err: new Error("Cannot find the property")
         });
       }
-      const accessibleRows = accessRows.filter(row => aboveRolesMap.has(row));
+      const accessibleRows = accessRows.filter(row => aboveRolesMap.has(row.role));
       if (!accessibleRows || accessibleRows.length == 0) {
         resolve({ isAccessible: false });
       }
@@ -117,8 +114,8 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
       for (row of accessibleRows) {
         accessibleGroups.set(row.group, true);
       }
-      Group
-        .isInGroup(userId, Array.from(accessibleGroups.keys()), false)
+      GroupModule
+        .isInGroup(requesterId, Array.from(accessibleGroups.keys()), false)
         .then(accessible => resolve({isAccessible: accessible}));
     })
     .catch(err => {
