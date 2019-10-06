@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const GroupModule = require('./group');
 const AclConfig = require('./acl_config');
+const User = require("../models/User");
 
 
 const collectionName = 'access_control';
@@ -86,13 +87,23 @@ const findPropertyCondition = (propertyId, propertyType) => {
 // Return Promise({ err: error, isAccessible: boolean })
 // accessRow is the AccessSet with given targetRole.
 const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) => {
+  if (propertyType == User.collection.collectionName) {
+    if (requesterId == propertyId) {
+      return Promise.resolve({ isAccessible: true });
+    }
+  }
   const aboveRolesList = AclConfig.getAboveRoles(propertyType, targetRole);
   const aboveRolesMap = aboveRolesList.reduce((map, role) => {
     map.set(role, true);
     return map;
   }, new Map());
   return new Promise((resolve, reject) => {
-    AccessModel.find( findPropertyCondition(propertyId, propertyType) ).exec()
+    let condition = { 'propertyType': propertyType };
+    if (!AclConfig.isPropertyBased(propertyType)) {
+      condition = { $or: [{'propertyType': propertyType},{'propertyId': propertyId}]};
+    }
+
+    AccessModel.find( condition ).exec()
     .then(accessRows => {
       if (!accessRows || !accessRows.length) {
         resolve({

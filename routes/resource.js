@@ -40,7 +40,7 @@ const postHandler = (model, processor) => (req, res) => {
   const propertyType = model.collection.collectionName;
   const propertyId = payload._id;
   const role = !payload._id ? "admin" : "read_write";
-  ACL.checkAccess(userId, propertyId, propertyType, role, (isAccessible) => {
+  ACL.checkAccess(userId, propertyId, propertyType, role, (err, isAccessible) => {
     if (!isAccessible) {
       return res.status(401).json({err: 'No permission to update.'});
     }
