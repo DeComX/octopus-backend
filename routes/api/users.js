@@ -46,6 +46,7 @@ var upload = multer({ storage: storage }).fields([
 
 router.post("/", upload, resource.postHandler(User, processor));
 router.get("/", resource.getHandler(User, processor));
+router.get("/meta", resource.getMetadataHandler(User, processor));
 router.delete("/", resource.deleteHandler(User));
 
 router.get("/titles", (req, res) => {
