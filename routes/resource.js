@@ -107,6 +107,9 @@ const defaultPaginationOptions = {
 const paginationGet = (model, processor, req, res) => {
   let options = JSON.parse(req.query.options || "{}");
   options = Object.assign(defaultPaginationOptions, options);
+  if (req.query.select) {
+    options.select = req.query.select;
+  }
 
   model
     .paginate(constructQuery(req.query), options)
@@ -114,7 +117,6 @@ const paginationGet = (model, processor, req, res) => {
       processor.postProcess(result, res, paginated=true);
     })
     .catch((err) => {
-      console.log(err);
       res.status(400).json({"errReason": err});
     });
 };
@@ -124,14 +126,17 @@ const defaultOptions = {
   sort: {updated_at: -1},
 };
 
-const noPaginationGet = (model, processor, req, res) => {
+const noPaginationGet = (model, processor, req, res, select) => {
   let options = JSON.parse(req.query.options || "{}");
   options = Object.assign(defaultOptions, options);
-  model
+  let query = model
     .find(constructQuery(req.query))
     .sort(options.sort)
-    .limit(options.limit)
-    .then((data) => {
+    .limit(options.limit);
+  if (req.query.select) {
+    query = query.select(req.query.select);
+  }
+  query.then((data) => {
       processor.postProcess(data || [], res)
     })
     .catch((err) => {
@@ -145,7 +150,14 @@ const getHandler = (model, processor) => (req, res) => {
   } else {
     noPaginationGet(model, processor, req, res);
   }
-}
+};
+
+const getMetadataHandler = (model, processor) => (req, res) => {
+  const publicFields =
+    fieldsHelper.getPublicFields(model.collection.collectionName);
+  req.query.select = Object.keys(publicFields).join(' ');
+  getHandler(model, processor)(req, res);
+};
 
 // only support delete one by id
 const deleteHandler = (model) => (req, res) => {
@@ -172,6 +184,7 @@ const deleteHandler = (model) => (req, res) => {
 
 module.exports = {
   getHandler: getHandler,
+  getMetadataHandler: getMetadataHandler,
   postHandler: postHandler,
   deleteHandler: deleteHandler
 }

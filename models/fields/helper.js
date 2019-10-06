@@ -5,6 +5,25 @@ const organization = require('./organization');
 const campaign = require('./campaign');
 const channel = require('./channel');
 
+const getPublicFields = (collectionName) => {
+  switch(collectionName) {
+    case 'event':
+      return event.publicFields;
+    case 'session':
+      return session.publicFields;
+    case 'user':
+      return user.publicFields;
+    case 'organization':
+      return organization.publicFields;
+    case 'campaign':
+      return campaign.publicFields;
+    case 'channel':
+      return channel.publicFields;
+    default:
+      return {};
+  }
+}
+
 const getFields = (collectionName) => {
   switch(collectionName) {
     case 'event':
@@ -44,6 +63,7 @@ const getValidator = (collectionName) => {
 }
 
 module.exports = {
+  getPublicFields: getPublicFields,
   getFields: getFields,
   getValidator: getValidator,
 }

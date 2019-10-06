@@ -60,11 +60,6 @@ const OrganizationPublicFields = {
   logo: {
     type: ImageSchema,
   },
-  type: {
-    type: String,
-    enum: ['venue', 'project', 'community', 'capital', 'other'],
-    requried: true
-  },
 }
 
 ContactSchma = new Schema({
@@ -80,12 +75,21 @@ ContactSchma = new Schema({
   },
   title: {
     type: String
+  },
+  // user id if the user is one of our members
+  user_id: {
+    type: String
   }
 },{ _id : false });
 
 const OrganizationFields = {
   ...OrganizationPublicFields,
-  members: {
+  type: {
+    type: String,
+    enum: ['venue', 'project', 'community', 'capital', 'other'],
+    requried: true
+  },
+  contacts: {
     type: [ContactSchma]
   },
   focused_area: {
