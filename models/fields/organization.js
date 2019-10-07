@@ -36,9 +36,25 @@ ContactInfoScheam = new Schema({
   },
 },{ _id : false });
 
+const ContactInfoValidator = (contact) => {
+  let errors = {};
+  ['type', 'value'].map(
+    field => {
+      if (isEmpty(contact[field])) {
+        errors[field] = "contact info " + field + " is required";
+      }
+    }
+  );
+  return {
+    errors,
+    isValid: isEmpty(errors)
+  };
+}
+
 ContactSchma = new Schema({
   name: {
     type: String,
+    required: true,
   },
   title: {
     type: String
@@ -51,6 +67,31 @@ ContactSchma = new Schema({
     type: String
   }
 },{ _id : false });
+
+const ContactValidator = (contact) => {
+  let errors = {};
+  ['name'].map(
+    field => {
+      if (isEmpty(contact[field])) {
+        errors[field] = field + " field is required";
+      }
+    }
+  );
+
+  let isValid = isEmpty(errors);
+  if (contact.contact_info.length > 0) {
+    errors.contact_info = contact.contact_info.map(info => {
+      const errRes = ContactInfoValidator(info)
+      isValid = isValid && errRes.isValid;
+      return errRes.errors;
+    });
+  }
+
+  return {
+    errors,
+    isValid: isValid
+  };
+}
 
 const OrganizationFields = {
   ...OrganizationPublicFields,
@@ -81,18 +122,27 @@ const OrganizationValidator = (data) => {
     }
   );
   let isValid = isEmpty(errors);
-  if (data.type === 'venue') {
+  if (data.type.includes('venue')) {
     if (data.addresses.length === 0) {
       errors.addresses_all = "At least one address is required for veune org";
+      isValid = false;
     } else {
       errors.addresses = data.addresses.map(address => {
-        Address.validator(data.address);
+        const addressError = Address.validator(address || {});
+        isValid = isValid && addressError.isValid;
+        return addressError.errors;
       });
     }
-    isValid = isValid && errors.addresses.reduce((isValid, errRes) => {
-      return isValid && errRes.isValid;
-    }, true);
   }
+
+  if (data.contacts.length > 0) {
+    errors.contacts = data.contacts.map(contact => {
+      const errRes = ContactValidator(contact);
+      isValid = isValid && errRes.isValid;
+      return errRes.errors;
+    })
+  }
+
   return {
     errors,
     isValid: isValid
