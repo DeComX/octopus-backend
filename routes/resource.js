@@ -30,6 +30,8 @@ const doUpdate = (model, processor, update, res) => {
       update,
       {new: true})
     .then((data) => processor.postProcess(data))
+    .catch(err => {throw err;})
+    .then(processed => res.json(processed))
     .catch((err) => res.status(400).json({"errReason": err}));
 }
 
