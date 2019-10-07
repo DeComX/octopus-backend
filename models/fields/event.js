@@ -8,6 +8,13 @@ const organization = require('./organization');
 const session = require('./session');
 const ImageSchema = require('./image');
 
+const VenueFields = {
+  name: String,
+  address: String,
+  google_map_link: String,
+  org_id: mongoose.mongo.ObjectId
+}
+
 const EventFields = {
   name: {
     type: String,
@@ -22,7 +29,7 @@ const EventFields = {
     required: true,
   },
   venue: {
-    type: new Schema(organization.publicFields),
+    type: new Schema(VenueFields),
     required: true,
   },
   description: {

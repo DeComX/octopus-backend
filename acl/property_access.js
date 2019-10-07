@@ -75,12 +75,15 @@ const getDefaultGroupName = (propertyId, propertyType, role) => {
 	return `${propertyType}_${propertyId}_${role}_group`;
 }
 
-
 const findPropertyCondition = (propertyId, propertyType) => {
   if (AclConfig.isPropertyBased(propertyType)) {
     return { 'propertyType': propertyType };
+  } else {
+    return {$or: [
+      {'propertyType': propertyType},
+      {'propertyId': propertyId, 'propertyType': propertyType}
+    ]};
   }
-  return { 'propertyId': propertyId };
 }
 
 // Return Promise({ err: error, isAccessible: boolean })
@@ -96,7 +99,7 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
   return new Promise((resolve, reject) => {
     let condition = { 'propertyType': propertyType };
     if (!AclConfig.isPropertyBased(propertyType)) {
-      condition = { $or: [{'propertyType': propertyType},{'propertyId': propertyId}]};
+      condition = findPropertyCondition(propertyId, propertyType)
     }
 
     AccessModel.find( condition ).exec()
@@ -410,6 +413,7 @@ const listRolesOnPropertyTypes = (requesterId, propertyTypeArray, callback) => {
 }
 
 const createAclForNewProperty = (requesterId, propertyId, propertyType) => {
+  let accessArray = [];
   GroupModule.isInGroup(
     requesterId,
     [AclConfig.getTypeAclGroupName(propertyType, "admin")],
@@ -418,7 +422,7 @@ const createAclForNewProperty = (requesterId, propertyId, propertyType) => {
     if (!isAccessible) {
       return Promise.reject(new Error("PERMISSION_DENIED"));
     }
-    const accessArray = AclConfig.getRoles(propertyType).map(role => {
+    accessArray = AclConfig.getRoles(propertyType).map(role => {
       let name = `group_${propertyType}_${role}`;
       if (!AclConfig.isPropertyBased(propertyType)) {
         name = `group_${propertyType}_${propertyId}_${role}`;
