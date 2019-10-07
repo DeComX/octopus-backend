@@ -84,19 +84,27 @@ const OrganizationPublicFields = {
   },
 }
 
-ContactSchma = new Schema({
+ContactInfoScheam = new Schema({
   type: {
     type: String,
-    enum: ['email', 'wechat', 'tel']
+    enum: ['email', 'wechat', 'tel', 'telegram', 'facebook', 'linkedin'],
+    required: true
   },
   value: {
-    type: String
+    type: String,
+    required: true
   },
+},{ _id : false });
+
+ContactSchma = new Schema({
   name: {
-    type: String
+    type: String,
   },
   title: {
     type: String
+  },
+  contact_info: {
+    type: [ContactInfoScheam]
   },
   // user id if the user is one of our members
   user_id: {
