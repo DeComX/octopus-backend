@@ -30,60 +30,44 @@ const fillSessions = (sessions) => {
 }
 
 const fillEvent = (event) => {
-  let eventObj = event.toObject();
-  return new Promise(
-    (resolve, reject) => {
-      fillSessions(event.sessions)
-        .then(filledSessions => {
-          eventObj.sessions = filledSessions;
-          resolve(eventObj);
-        });
-    }
-  );
+  const eventObj = (event instanceof Event)
+    ? event.toObject()
+    : event;
+  return fillSessions(eventObj.sessions)
+    .then(filledSessions => {
+      eventObj.sessions = filledSessions;
+      return Promise.resolve(eventObj);
+    });
 }
 
 const fillEvents = (events) => {
   const promises = events
     .map(event => fillEvent(event));
-  return new Promise(
-    (resolve, reject) => {
-      Promise
-        .all(promises)
-        .then((filled) => resolve(filled));
-    }
-  );
+  return Promise.all(promises);
 }
 
 const fillCampaign = (campaign) => {
-  let campaignObj = campaign.toObject();
-  return new Promise(
-    (resolve, reject) => {
-      Event.findById(campaign.event)
-        .then(event => {
-          fillEvent(event)
-            .then(filledEvent => {
-              campaignObj.event = filledEvent;
-              resolve(campaignObj);
-            })
+  const campaignObj = (campaign instanceof Campaign)
+    ? campaign.toObject()
+    : campaign;
+  return Event.findById(campaign.event)
+    .then(event => {
+      fillEvent(event)
+        .then(filledEvent => {
+          campaignObj.event = filledEvent;
+          return Promise.resolve(campaignObj);
         })
-        .catch(err => {
-          campaignObj.event = null;
-          resolve(campaignObj);
-        });
-    }
-  );
+    })
+    .catch(err => {
+      campaignObj.event = null;
+      return Promise.resolve(campaignObj);
+    });
 }
 
 const fillCampaigns = (campaigns) => {
   const promises = campaigns
     .map(campaign => fillCampaign(campaign));
-  return new Promise(
-    (resolve, reject) => {
-      Promise
-        .all(promises)
-        .then((filled) => resolve(filled));
-    }
-  );
+  return Promise.all(promises);
 }
 
 module.exports = {
