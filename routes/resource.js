@@ -43,7 +43,7 @@ const postHandler = (model, processor) => (req, res) => {
   const userId = req.user.id;
   const propertyType = model.collection.collectionName;
   const propertyId = payload._id;
-  const role = !payload._id ? "admin" : "read_write";
+  const role = !payload._id ? AclConfig.StrictRoles.ADMIN : AclConfig.StrictRoles.READ_WRITE;
   ACL.checkAccess(userId, propertyId, propertyType, role, (err, isAccessible) => {
     if (!isAccessible) {
       return res.status(401).json({err: 'No permission to update.'});
@@ -158,13 +158,34 @@ const noPaginationGet = (model, processor, req, res, select) => {
 };
 
 const getHandler = (model, processor) => (req, res) => {
-  if (req.query.enablePagination) {
-    paginationGet(model, processor, req, res);
-  } else {
-    noPaginationGet(model, processor, req, res);
+  const userId = req.user.id;
+  let propertyId = "";
+  const query = constructQuery(req.query);
+  if (query["$and"] && query["$and"].length > 0) {
+    for (filter of query["$and"]) {
+      if ("_id" in filter) {
+        propertyId = filter["_id"] || "";
+        break;
+      }
+    }
   }
+  const propertyType = model.collection.collectionName;
+  const role = AclConfig.StrictRoles.READ_DETAIL;
+  ACL.checkAccess(userId, propertyId, propertyType, role, (err, isAccessible) => {
+    if (!isAccessible) {
+      return res.status(401).json({err: 'No permission to update.'});
+    }
+
+    if (req.query.enablePagination) {
+      paginationGet(model, processor, req, res);
+    } else {
+      noPaginationGet(model, processor, req, res);
+    }
+  });
 };
 
+// No access control on getMetatdataHandler, since metadata are open to
+// everyone.
 const getMetadataHandler = (model, processor) => (req, res) => {
   const publicFields =
     fieldsHelper.getPublicFields(model.collection.collectionName);

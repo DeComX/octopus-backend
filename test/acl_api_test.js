@@ -37,7 +37,7 @@ describe('To test listRolesOnPropertyTypes()', () => {
   it('successfully listed access of users', (done) => {
     chai.request(server)
         .post('/api/v1/acl/listRolesOnPropertyTypes')
-        .set("authorization", TestUtils.getToken("admin1"))
+        .set("authorization", TestUtils.getToken("5d9936c1d2290210eedac615"))
         .send({propertyTypeArray: ["user", "organization"]})
         .end((err, res) => {
           res.should.have.status(200);

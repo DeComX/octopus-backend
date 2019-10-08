@@ -117,16 +117,16 @@ const checkAccessHelper = (requesterId, propertyId, propertyType, targetRole) =>
       for (row of accessibleRows) {
         accessibleGroups.set(row.group, true);
       }
-      GroupModule
+
+      return GroupModule
         .isInGroup(requesterId, Array.from(accessibleGroups.keys()), false)
-        .then(accessible => resolve({isAccessible: accessible}));
+        .then(accessible => {
+          return resolve({isAccessible: accessible})
+        });
     })
     .catch(err => {
       reject(err);
-    })
-    .then(isAccessible => {
-      resolve({ isAccessible: isAccessible });
-    })
+    });
   });
 }
 
