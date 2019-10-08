@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const AclConfig = require('../../acl/acl_config');
 const { check, body, validationResult } = require('express-validator');
 
 const ACL = require('../../acl/property_access');
