@@ -217,6 +217,7 @@ const deleteHandler = (model) => (req, res) => {
 };
 
 module.exports = {
+  constructQuery: constructQuery,
   getHandler: getHandler,
   getMetadataHandler: getMetadataHandler,
   postHandler: postHandler,

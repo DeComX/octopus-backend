@@ -2,9 +2,22 @@ const express = require("express");
 const router = express.Router();
 const AclConfig = require('../../acl/acl_config');
 const { check, body, validationResult } = require('express-validator');
+const resource = require('../resource');
 
 const ACL = require('../../acl/property_access');
 const Channel = require('../../models/Channel');
+
+router.get("/search", (req, res) => {
+  Channel.find(
+      resource.constructQuery(req.query),
+      'name type')
+    .then(channels => res.json(channels))
+    .catch(
+      err => res.status(400).json({
+        ok: false,
+        message: err
+      }));
+});
 
 router.get("/allchannels", (req, res) => {
   const userId = req.user.id;
