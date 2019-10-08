@@ -173,7 +173,7 @@ const getHandler = (model, processor) => (req, res) => {
   const role = AclConfig.StrictRoles.READ_DETAIL;
   ACL.checkAccess(userId, propertyId, propertyType, role, (err, isAccessible) => {
     if (!isAccessible) {
-      return res.status(401).json({err: 'No permission to update.'});
+      return res.status(401).json({err: 'No permission to get ' + propertyType});
     }
 
     if (req.query.enablePagination) {
@@ -200,7 +200,7 @@ const deleteHandler = (model) => (req, res) => {
   const propertyId = req.query._id;
   ACL.checkAccess(userId, propertyId, propertyType, "owner", (isAccessible) => {
     if (!isAccessible) {
-      return res.status(401).json({err: 'No permission to update.'});
+      return res.status(401).json({err: 'No permission to delete.'});
     }
     if (req.query._id) {
       model
