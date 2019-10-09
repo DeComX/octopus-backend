@@ -52,7 +52,7 @@ const fillCampaign = (campaign) => {
     : campaign;
   return Event.findById(campaign.event)
     .then(event => {
-      fillEvent(event)
+      return fillEvent(event)
         .then(filledEvent => {
           campaignObj.event = filledEvent;
           return Promise.resolve(campaignObj);
