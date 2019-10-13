@@ -35,6 +35,7 @@ UserSchema.statics.upsertGoogleUser = function(accessToken, refreshToken, profil
           id: profile.id,
           token: accessToken
         },
+        source: ['self_signup'],
         updated_at: new Date()
       });
       newUser.save(function(error, savedUser) {

@@ -17,7 +17,7 @@ const UserPublicFields = {
   },
   avatar: {
     type: ImageSchema
-  },
+  }
 }
 
 const UserFields = {
@@ -27,8 +27,33 @@ const UserFields = {
     required: true,
     unique : true
   },
+  source: {
+    type: [{
+      type: String,
+      enum: [
+        'eventbrite',
+        'human_input',
+        'self_signup',
+        'member_application',
+        'email_subscription',
+        'wechat_group',
+        'onsite_event'
+      ]
+    }],
+    required: true
+  },
   roles: {
-    type: [{ type: String, enum: [ 'member', 'presenter', 'advisor', 'honor_member' ] }],
+    type: [{
+      type: String,
+      enum: [
+        'member',
+        'presenter',
+        'advisor',
+        'honor_member',
+        'operator',
+        'volunteer'
+      ]
+    }],
     default: ["member"],
     required: true
   },
