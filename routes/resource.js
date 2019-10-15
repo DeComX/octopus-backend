@@ -83,25 +83,46 @@ const postHandler = (model, processor) => (req, res) => {
 };
 
 const getContainsCondition = (name, values) => {
-  if (values.includes(null)) {
-    values = values.filter(v => v !== null);
+  let res = {$or: []};
+
+  if (values.includes('null')) {
+    values = values.filter(v => v !== 'null');
+    res.$or.push({[name]: null})
   }
 
-  if (values.length > 1) {
-    const regStr = "(" + values.join("|") + ")";
-    return {$or: [
-      {[name]: {$regex: new RegExp(regStr, 'i')}},
-      {[name]: null}
-    ]};
-  } else if (values.length === 1) {
-    const regStr = values[0];
-    return {$or: [
-      {[name]: {$regex: new RegExp(regStr, 'i')}},
-      {[name]: null}
-    ]};
-  } else {
-    return {[name]: null}
+  if (values.includes('not null')) {
+    values = values.filter(v => v !== 'not null');
+    res.$or.push({[name]: {$ne: null}})
   }
+
+  if (values.length > 0) {
+    const regStr = values.length > 1
+      ? "(" + values.join("|") + ")"
+      : values[0];
+    res.$or.push({[name]: {$regex: new RegExp(regStr, 'i')}});
+  }
+
+  return res.$or.length > 1
+    ? res
+    : (res.$or.length > 0 ? res.$or[0] : {});
+}
+
+const getEqualsCondition = (name, values) => {
+  let res = {$or: []};
+
+  if (values.includes('not null')) {
+    values = values.filter(v => v !== 'not null');
+    res.$or.push({[name]: {$ne: null}})
+  }
+
+  if (values.includes('null')) {
+    values = values.filter(v => v !== 'null').concat(null);
+  }
+  res.$or.push({[name]: {$in: values}});
+
+  return res.$or.length > 1
+    ? res
+    : (res.$or.length > 0 ? res.$or[0] : {});
 }
 
 const getCondition = (filter) => {
@@ -110,7 +131,7 @@ const getCondition = (filter) => {
     return getContainsCondition(filter.name, filter.values);
   // boolean or text matching
   } else if (filter.condition === 'equals') {
-    return {[filter.name]: {$in: filter.values}};
+    return getEqualsCondition(filter.name, filter.values);
   }
   return null;
 }

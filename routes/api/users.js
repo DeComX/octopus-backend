@@ -69,8 +69,7 @@ router.get("/selector", (req, res) => {
     .group({ _id: null, values: {"$addToSet": "$" + field }})
     .exec()
     .then(result => {
-      values = (result[0] || {}).values || [];
-      res.json(values.concat('null'));
+      res.json((result[0] || {}).values || []);
     })
     .catch(err => {
       res.status(400).json(err)
