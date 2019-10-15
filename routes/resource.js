@@ -82,16 +82,48 @@ const postHandler = (model, processor) => (req, res) => {
   })
 };
 
+const getContainsCondition = (name, values) => {
+  if (values.includes(null)) {
+    values = values.filter(v => v !== null);
+  }
+
+  if (values.length > 1) {
+    const regStr = "(" + values.join("|") + ")";
+    return {$or: [
+      {[name]: {$regex: new RegExp(regStr, 'i')}},
+      {[name]: null}
+    ]};
+  } else if (values.length === 1) {
+    const regStr = values[0];
+    return {$or: [
+      {[name]: {$regex: new RegExp(regStr, 'i')}},
+      {[name]: null}
+    ]};
+  } else {
+    return {[name]: null}
+  }
+}
+
+const getCondition = (filter) => {
+  // text matching
+  if (filter.condition === 'contains') {
+    return getContainsCondition(filter.name, filter.values);
+  // boolean or text matching
+  } else if (filter.condition === 'equals') {
+    return {[filter.name]: {$in: filter.values}};
+  }
+  return null;
+}
+
 const constructQuery = (req_query) => {
   let query = {$and: []};
-  query.$and = query.$and.concat(
-    (req_query.regexFilters || []).map(regexFilter => {
-      const parsed = JSON.parse(regexFilter);
-      return {[parsed.key]: new RegExp(parsed.value, 'i')}
-    })
-  );
-  const parsedFilters = (req_query.filters || []).map(filter => JSON.parse(filter));
-  query.$and = query.$and.concat(parsedFilters);
+  const filters = (req_query.filters || []).map(filter => JSON.parse(filter));
+  for (let filter of filters) {
+    const condition = getCondition(filter);
+    if (condition) {
+      query.$and = query.$and.concat(condition);
+    }
+  }
   if (query.$and.length === 0) {
     query = {};
   }
