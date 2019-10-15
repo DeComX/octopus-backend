@@ -1,3 +1,5 @@
+const mongoose = require("mongoose");
+
 const router = require("express").Router();
 const resource = require('../resource');
 const User = require("../../models/User");
@@ -49,22 +51,30 @@ router.get("/", resource.getHandler(User, processor));
 router.get("/meta", resource.getMetadataHandler(User, processor));
 router.delete("/", resource.deleteHandler(User));
 
-router.get("/titles", (req, res) => {
-  const prefix = (req.query.prefix || "").toLowerCase();
-  User.distinct('title')
-    .then(titles => {
-      res.json(titles.filter(title => title.toLowerCase().startsWith(prefix)));
-    })
-    .catch(err => res.status(400).json(err));
-});
+const isArray = (schema, field) => {
+  return schema.path(field) instanceof mongoose.Schema.Types.Array;
+}
 
-router.get("/organizations", (req, res) => {
+router.get("/selector", (req, res) => {
   const prefix = (req.query.prefix || "").toLowerCase();
-  User.distinct('organization')
-    .then(orgs => {
-      res.json(orgs.filter(org => org.toLowerCase().startsWith(prefix)));
+  const prefixReg = new RegExp("^" + prefix, 'i');
+  const field = req.query.field;
+
+  let aggregator = User.aggregate([{$project: {[field]: 1}}]);
+  if (isArray(User.schema, field)) {
+      aggregator = aggregator.unwind(field);
+  }
+  aggregator.match({[field]: prefixReg})
+    .limit(15)
+    .group({ _id: null, values: {"$addToSet": "$" + field }})
+    .exec()
+    .then(result => {
+      values = (result[0] || {}).values || [];
+      res.json(values.concat('null'));
     })
-    .catch(err => res.status(400).json(err));
+    .catch(err => {
+      res.status(400).json(err)
+    });
 });
 
 router.post('/auth/local', function(req, res, next) {

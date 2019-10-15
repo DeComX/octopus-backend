@@ -28,19 +28,7 @@ const UserFields = {
     unique : true
   },
   source: {
-    type: [{
-      type: String,
-      enum: [
-        'eventbrite',
-        'human_input',
-        'self_signup',
-        'member_application',
-        'email_subscription',
-        'wechat_group',
-        'onsite_event'
-      ]
-    }],
-    required: true
+    type: [String],
   },
   roles: {
     type: [{
@@ -56,6 +44,14 @@ const UserFields = {
     }],
     default: ["member"],
     required: true
+  },
+  subscription_status:{
+    type: String,
+    enum: ['subscribed', 'unsubscribed', 'opt_out', 'cleaned'],
+    default: 'unsubscribed'
+  },
+  expectation: {
+    type: [String]
   },
   interested_topics: {
     type: [String]
@@ -78,12 +74,25 @@ const UserFields = {
   password: {
     type: String,
   },
+  location: {
+    type: String
+  },
   googleProvider: {
     type: {
       id: String,
       token: String
     },
     select: false
+  },
+  resume: {
+    type: String
+  },
+  interested_in_volunteer: {
+    type: Boolean,
+    default: false
+  },
+  feedback: {
+    type: String
   }
 };
 
