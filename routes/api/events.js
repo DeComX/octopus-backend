@@ -52,6 +52,7 @@ var upload = multer({ storage: storage }).fields([
 
 router.post("/", upload, resource.postHandler(Event, processor));
 router.get("/", resource.getHandler(Event, processor));
+router.get("/id", resource.getOneByIdHandler(Event, processor));
 router.delete("/", resource.deleteHandler(Event));
 
 module.exports = router;

@@ -237,13 +237,43 @@ const getHandler = (model, processor) => (req, res) => {
   });
 };
 
-// No access control on getMetatdataHandler, since metadata are open to
-// everyone.
-const getMetadataHandler = (model, processor) => (req, res) => {
-  const publicFields =
-    fieldsHelper.getPublicFields(model.collection.collectionName);
-  req.query.select = Object.keys(publicFields).join(' ');
-  getHandler(model, processor)(req, res);
+const getOneByIdImpl = (model, processor) => (id, options, res) => {
+  model
+    .findById(id, options)
+    .then(doc => {
+      return processor.postProcess(doc);
+    })
+    .catch(err => {throw err;})
+    .then(processed => {
+      res.json(processed);
+    })
+    .catch(err => {
+      res.status(400).json({errReason: err});
+    });
+};
+
+const getOneByIdHandler = (model, processor) => (req, res) => {
+  const id = req.query.id;
+  if (!id) {
+    res.status(401).json("No id specified");
+  }
+
+  if (req.query.metaOnly) {
+    const publicFields =
+      fieldsHelper.getPublicFields(model.collection.collectionName);
+    const select = Object.keys(publicFields).join(' ');
+    getOneByIdImpl(model, processor)(id, {select: select}, res);
+  } else {
+    const userId = req.user.id;
+    const role = AclConfig.StrictRoles.READ_DETAIL;
+    const propertyType = model.collection.collectionName;
+    ACL.checkAccess(userId, id, propertyType, role, (err, isAccessible) => {
+      if (!isAccessible) {
+        return res.status(401).json({err: 'No permission to get ' + propertyType});
+      }
+      getOneByIdImpl(model, processor)(id, {}, res);
+    });
+  }
 };
 
 // only support delete one by id
@@ -272,7 +302,7 @@ const deleteHandler = (model) => (req, res) => {
 module.exports = {
   constructQuery: constructQuery,
   getHandler: getHandler,
-  getMetadataHandler: getMetadataHandler,
+  getOneByIdHandler: getOneByIdHandler,
   postHandler: postHandler,
   deleteHandler: deleteHandler
 }
