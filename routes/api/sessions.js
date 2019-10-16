@@ -25,7 +25,7 @@ const processor = {
 }
 
 router.post("/", resource.postHandler(Session, processor));
-router.get("/", resource.getHandler(Session, processor));
+router.get("/all", resource.getHandler(Session, processor));
 router.get("/id", resource.getOneByIdHandler(Session, processor));
 router.delete("/", resource.deleteHandler(Session));
 

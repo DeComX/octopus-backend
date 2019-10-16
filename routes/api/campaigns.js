@@ -51,7 +51,7 @@ var upload = multer({ storage: storage }).fields([
 ]);
 
 router.post("/", upload, resource.postHandler(Campaign, processor));
-router.get("/", resource.getHandler(Campaign, processor));
+router.get("/all", resource.getHandler(Campaign, processor));
 router.get("/id", resource.getOneByIdHandler(Campaign, processor));
 router.delete("/", resource.deleteHandler(Campaign));
 

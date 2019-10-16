@@ -82,17 +82,36 @@ const postHandler = (model, processor) => (req, res) => {
   })
 };
 
-const getContainsCondition = (name, values) => {
+const isArray = (schema, name) => {
+  return schema.paths[name] instanceof mongoose.Schema.Types.Array;
+};
+
+const isString = (schema, name) => {
+  return schema.paths[name] instanceof mongoose.Schema.Types.String;
+};
+
+const emptyValues = (schema, name) => {
+  if (isArray(schema, name)) {
+    return [null, []];
+  } else if (isString(schema, name)) {
+    return [null, ""];
+  } else {
+    return [null];
+  }
+};
+
+const getContainsCondition = (schema, name, values) => {
+  const emptys = emptyValues(schema, name);
   let res = {$or: []};
 
   if (values.includes('null')) {
     values = values.filter(v => v !== 'null');
-    res.$or.push({[name]: null})
+    res.$or.push({[name]: {$in: emptys}});
   }
 
   if (values.includes('not null')) {
     values = values.filter(v => v !== 'not null');
-    res.$or.push({[name]: {$ne: null}})
+    res.$or.push({[name]: {$nin: emptys}});
   }
 
   if (values.length > 0) {
@@ -107,16 +126,19 @@ const getContainsCondition = (name, values) => {
     : (res.$or.length > 0 ? res.$or[0] : {});
 }
 
-const getEqualsCondition = (name, values) => {
+const getEqualsCondition = (schema, name, values) => {
+  const emptys = emptyValues(schema, name);
   let res = {$or: []};
 
   if (values.includes('not null')) {
     values = values.filter(v => v !== 'not null');
-    res.$or.push({[name]: {$ne: null}})
+    res.$or.push({[name]: {$nin: emptys}});
   }
 
   if (values.includes('null')) {
-    values = values.filter(v => v !== 'null').concat(null);
+    values = values
+      .filter(v => v !== 'null')
+      .concat(emptys);
   }
   res.$or.push({[name]: {$in: values}});
 
@@ -125,22 +147,22 @@ const getEqualsCondition = (name, values) => {
     : (res.$or.length > 0 ? res.$or[0] : {});
 }
 
-const getCondition = (filter) => {
+const getCondition = (schema, filter) => {
   // text matching
   if (filter.condition === 'contains') {
-    return getContainsCondition(filter.name, filter.values);
+    return getContainsCondition(schema, filter.name, filter.values);
   // boolean or text matching
   } else if (filter.condition === 'equals') {
-    return getEqualsCondition(filter.name, filter.values);
+    return getEqualsCondition(schema, filter.name, filter.values);
   }
   return null;
 }
 
-const constructQuery = (req_query) => {
+const constructQuery = (schema, req_query) => {
   let query = {$and: []};
   const filters = (req_query.filters || []).map(filter => JSON.parse(filter));
   for (let filter of filters) {
-    const condition = getCondition(filter);
+    const condition = getCondition(schema, filter);
     if (condition) {
       query.$and = query.$and.concat(condition);
     }
@@ -170,7 +192,7 @@ const paginationGet = (model, processor, req, res) => {
   }
 
   model
-    .paginate(constructQuery(req.query), options)
+    .paginate(constructQuery(model.schema, req.query), options)
     .then((result) => {
       processor.postProcess(result, paginated=true).then(
         processed => {
@@ -193,7 +215,7 @@ const noPaginationGet = (model, processor, req, res, select) => {
   let options = JSON.parse(req.query.options || "{}");
   options = Object.assign(defaultOptions, options);
   let query = model
-    .find(constructQuery(req.query))
+    .find(constructQuery(model.schema, req.query))
     .sort(options.sort)
     .limit(options.limit);
   if (req.query.select) {
@@ -212,19 +234,9 @@ const noPaginationGet = (model, processor, req, res, select) => {
 
 const getHandler = (model, processor) => (req, res) => {
   const userId = req.user.id;
-  let propertyId = "";
-  const query = constructQuery(req.query);
-  if (query["$and"] && query["$and"].length > 0) {
-    for (filter of query["$and"]) {
-      if ("_id" in filter) {
-        propertyId = filter["_id"] || "";
-        break;
-      }
-    }
-  }
   const propertyType = model.collection.collectionName;
   const role = AclConfig.StrictRoles.READ_DETAIL;
-  ACL.checkAccess(userId, propertyId, propertyType, role, (err, isAccessible) => {
+  ACL.checkAccess(userId, "", propertyType, role, (err, isAccessible) => {
     if (!isAccessible) {
       return res.status(401).json({err: 'No permission to get ' + propertyType});
     }
